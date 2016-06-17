@@ -81,11 +81,14 @@ Class mapped objects also allow for method chaining. E.g.
 ```php
     $article = (new Article())
         ->title("My Article Title")
-        ->authorId(45)
         ->body("The article body")
         ->date("now")
         ->save();
 ```
+
+### Accessing Values
+
+The class mapper takes all fields in your section and creates class member names for them automatically. These names are generated using the field name and converting them to `camelCase`. E.g. "Published Date" becomes `publishedDate` or "My Awesome Field" is `myAwesomeField`.
 
 ### Creating A Custom Field Mapping
 
