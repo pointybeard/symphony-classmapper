@@ -1,6 +1,8 @@
 Symphony Class Mapper
 =====================
 
+[![Latest Stable Version](https://poser.pugx.org/pointybeard/symphony-classmapper/version)](https://packagist.org/packages/pointybeard/symphony-classmapper) [![License](https://poser.pugx.org/pointybeard/symphony-classmapper/license)](https://packagist.org/packages/pointybeard/symphony-classmapper)
+
 Maps sections into custom objects, simplifying the process of creating, modifying, deleting and fetching entries in Symphony.
 
 ## Installation
@@ -186,7 +188,7 @@ By default, the class mapper gives you `fetchById` and `all` methods. However, y
     }
 ```
 
-The results are loaded into a SymphonyPDO `ResultIterator` object using the current class for each record. The results can be access using a `foreach` loop or the `each()` method with a custom function. e.g.
+The results are loaded into a SymphonyPDO `ResultIterator` object using the current class for each record. The results can be accessed using a `foreach` loop or the `each()` method with a custom function. e.g.
 
 ```php
     $articles->fetchPublished()->each(function ($article) {
@@ -200,3 +202,11 @@ The results are loaded into a SymphonyPDO `ResultIterator` object using the curr
 
 If you believe you have found a bug, please report it using the [GitHub issue tracker](https://github.com/pointybeard/symphony-classmapper/issues),
 or better yet, fork the library and submit a pull request.
+
+## Contributing
+
+We encourage you to contribute to this project. Please check out the [Contributing documentation](https://github.com/pointybeard/symphony-classmapper/blob/master/CONTRIBUTING.md) for guidelines about how to get involved.
+
+## License
+
+"Symphony Class Mapper" is released under the [MIT License](http://www.opensource.org/licenses/MIT).
