@@ -38,10 +38,11 @@ To use the Class Mapper, simply extend `AbstractClassMapper`. E.g. assuming you 
     {
         const SECTION = 'articles';
         protected static $sectionFields;
+        protected static $fieldMapping = [];
     }
 ```
 
-The only things you must provide are the constant `SECTION` which is the handle of your section, and static member variable `$sectionFields` which holds a mapping of the fields from your section. This gets auto-populated by the parent object. Everything else you get for free.
+The only things you must provide are the constant `SECTION`, which is the handle of your section, and static member variables `$sectionFields` and `$fieldMapping` which hold a mapping of the fields from your section. This gets auto-populated by the parent object. Everything else you get for free.
 
 You can now easily create new entries or load existing ones. For example, using the example class above:
 
