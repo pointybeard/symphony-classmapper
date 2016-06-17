@@ -1,0 +1,30 @@
+{
+    "name": "pointybeard/symphony-classmapper",
+    "version": "0.1.0",
+    "type": "library",
+    "description": "Maps sections into custom objects, simplifying the process of creating, modifying, deleting and fetching entries in Symphony.",
+    "keywords": ["symphony", "class mapper", "sections"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alistair Kearney",
+            "email": "hi@alistairkearney.com",
+            "homepage": "http://alistairkearney.com",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+      "issues": "https://github.com/pointybeard/symphony-classmapper/issues",
+      "wiki": "https://github.com/pointybeard/symphony-classmapper/wiki"
+    },
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=5.6.6",
+        "pointybeard/symphony-pdo": "~0.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Symphony\\ClassMapper\\": "src/"
+        }
+    }
+}
