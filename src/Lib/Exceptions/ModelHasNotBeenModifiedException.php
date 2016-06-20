@@ -2,6 +2,6 @@
 
 namespace Symphony\ClassMapper\Lib\Exceptions;
 
-class ModelHasNotBeenModified extends \Exception
+class ModelHasNotBeenModifiedException extends \Exception
 {
 }
