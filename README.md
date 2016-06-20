@@ -1,5 +1,9 @@
-Symphony Class Mapper
-=====================
+# Symphony Section Class Mapper
+
+- Version: v0.1.1
+- Date: June 21 2016
+- [Release notes](https://github.com/pointybeard/symphony-classmapper/blob/master/CHANGELOG.md)
+- [GitHub repository](https://github.com/pointybeard/symphony-classmapper)
 
 [![Latest Stable Version](https://poser.pugx.org/pointybeard/symphony-classmapper/version)](https://packagist.org/packages/pointybeard/symphony-classmapper) [![License](https://poser.pugx.org/pointybeard/symphony-classmapper/license)](https://packagist.org/packages/pointybeard/symphony-classmapper)
 
@@ -7,7 +11,7 @@ Maps sections into custom objects, simplifying the process of creating, modifyin
 
 ## Installation
 
-Omnipay is installed via [Composer](http://getcomposer.org/). To install, simply add it
+Symphony Class Mapper is installed via [Composer](http://getcomposer.org/). To install, simply add it
 to your `composer.json` file:
 
 ```json
@@ -25,7 +29,7 @@ And run composer to update your dependencies:
 
 ## Usage
 
-To use the Class Mapper, simply extend `AbstractClassMapper`. E.g. assuming you have a section called 'articles' with a single field 'title':
+To use the Class Mapper, simply extend `AbstractClassMapper`, and use `Trait\hasClassMapperTrait`. E.g. assuming you have a section called 'articles' with a single field 'title':
 
 ```php
     <?php
@@ -34,15 +38,17 @@ To use the Class Mapper, simply extend `AbstractClassMapper`. E.g. assuming you 
 
     use Symphony\ClassMapper\Lib;
 
-    final class Articles extends Lib\AbstractClassMapper
+    final class Article extends Lib\AbstractClassMapper
     {
-        const SECTION = 'articles';
-        protected static $sectionFields;
-        protected static $fieldMapping = [];
+        use Lib\Traits\hasClassMapperTrait;
     }
 ```
 
-The only things you must provide are the constant `SECTION`, which is the handle of your section, and static member variables `$sectionFields` and `$fieldMapping` which hold a mapping of the fields from your section. This gets auto-populated by the parent object. Everything else you get for free.
+The trait `hasClassMapperTrait` provides three static member variables: `$sectionFields`, `$fieldMapping` and `$section`. They are used internally and hold a mapping to the Symphony section and the fields from that section. All are auto-populated by the parent object.
+
+The class mapper will attempt to deduce your section handle from your class name. It does this by assuming that your section is a pluralised version of the class name. In the above example, the class name of 'Article' is used to deduce that the corresponding section handle is `articles`. Should the class mapper not be able to locate a section, an exception will be thrown.
+
+The section can set manually by populating the `SECTION` class constant. e.g. `const SECTION = 'article';` This is useful if your section name doesn't stick to the pluralisation assumption or if it might return an ambiguous result (more than 1 matching section).
 
 You can now easily create new entries or load existing ones. For example, using the example class above:
 
@@ -213,4 +219,4 @@ We encourage you to contribute to this project. Please check out the [Contributi
 
 ## License
 
-"Symphony Class Mapper" is released under the [MIT License](http://www.opensource.org/licenses/MIT).
+"Symphony Section Class Mapper" is released under the [MIT License](http://www.opensource.org/licenses/MIT).
