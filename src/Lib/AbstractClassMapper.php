@@ -11,6 +11,7 @@ abstract class AbstractClassMapper
     protected $properties=[];
 
     // When update() is called, it will return immediately if nothing has been modified.
+
     protected $hasBeenModified = false;
 
     protected static function handleToClassMemberName($handle) {
@@ -31,6 +32,66 @@ abstract class AbstractClassMapper
         }
 
         return $xml;
+    }
+
+    /**
+     * Takes input and produces an array of possible pluralised versions
+     * of that input. Note that this method is just a convienence and does not
+     * verify that the output are actually words.
+     * @param  string $input The input to pluralised
+     * @return array         An array containing possible pluraised versions of
+     *                       the input.
+     * @usedby getSectionHandleFromClassName()
+     */
+    private static function pluralise($input) {
+        return ["{$input}s", "{$input}es", substr($input, 0, -1) . "ies"];
+    }
+
+    private static function getSectionHandleFromClassName() {
+
+        if(is_null(static::$section) || empty(static::$section)) {
+
+            if(defined(get_called_class() . "::SECTION")){
+
+                // The next part expects to get an array of possible section
+                // handles. Given the child class has a pre-defined
+                // section mapping, use that.
+                $sectionHandles = [static::SECTION];
+
+            } else {
+
+                // Let figure out the section handle
+                $class = strtolower(array_pop(explode("\\", get_called_class())));
+
+                // Assume it is singular, and look for a pluralised section handles
+                $sectionHandles = self::pluralise($class);
+            }
+
+            // Check the database for a matching section
+            $db = SymphonyPDO\Loader::instance();
+            $query = $db->prepare(
+                sprintf('SELECT SQL_CALC_FOUND_ROWS `id`, `handle` FROM `tbl_sections` WHERE `handle` IN ("%s")', implode('", "', $sectionHandles))
+            );
+
+            $query->execute();
+
+            // Unable to find any matching section
+            if ($query->rowCount() <= 0) {
+                throw new Exceptions\SectionNotFoundException(
+                    "Unable to find section from class name '".get_called_class()."': no section could be located"
+                );
+
+            // Result was ambiguous. Pluraisation returned more than 1 matching section
+            } elseif($query->rowCount() > 1) {
+                throw new Exceptions\SectionNotFoundException(
+                    "Unable to find section from class name '".get_called_class()."': ambiguous section name. Pluralisation returned more than 1 result."
+                );
+            }
+
+            static::$section = $query->fetch(\PDO::FETCH_OBJ)->handle;
+        }
+
+        return static::$section;
     }
 
     protected function getData()
@@ -148,7 +209,7 @@ abstract class AbstractClassMapper
 
     protected static function getSectionId()
     {
-        return SectionManager::fetchIDFromHandle(static::SECTION);
+        return SectionManager::fetchIDFromHandle(static::getSectionHandleFromClassName());
     }
 
     public function delete()
@@ -159,7 +220,7 @@ abstract class AbstractClassMapper
     public function save($sectionHandle=null)
     {
         if (is_null($sectionHandle)) {
-            $sectionHandle = static::SECTION;
+            $sectionHandle = static::getSectionHandleFromClassName();
         }
 
         // This is a memory hog. Disable logging.
