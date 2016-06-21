@@ -201,7 +201,7 @@ By default, the class mapper gives you `fetchById` and `all` methods. However, y
 The results are loaded into a SymphonyPDO `ResultIterator` object using the current class for each record. The results can be accessed using a `foreach` loop or the `each()` method with a custom function. e.g.
 
 ```php
-    $articles->fetchPublished()->each(function ($article) {
+    Article::fetchPublished()->each(function ($article) {
       $article
         ->published(false)
         ->save();
