@@ -1,7 +1,7 @@
 # Symphony Section Class Mapper
 
-- Version: v0.1.1
-- Date: June 21 2016
+- Version: v0.2.0
+- Date: June 29 2016
 - [Release notes](https://github.com/pointybeard/symphony-classmapper/blob/master/CHANGELOG.md)
 - [GitHub repository](https://github.com/pointybeard/symphony-classmapper)
 
@@ -11,21 +11,7 @@ Maps sections into custom objects, simplifying the process of creating, modifyin
 
 ## Installation
 
-Symphony Class Mapper is installed via [Composer](http://getcomposer.org/). To install, simply add it
-to your `composer.json` file:
-
-```json
-{
-    "require": {
-        "pointybeard/symphony-classmapper": "~0.1"
-    }
-}
-```
-
-And run composer to update your dependencies:
-
-    $ curl -s http://getcomposer.org/installer | php
-    $ php composer.phar update
+Symphony Class Mapper is installed via [Composer](http://getcomposer.org/). To install, use `composer require pointybeard/symphony-classmapper` or add `"pointybeard/symphony-classmapper": "~0.2"` to your `composer.json` file.
 
 ## Usage
 
@@ -98,18 +84,21 @@ The class mapper takes all fields in your section and creates class member names
 
 ### Creating A Custom Field Mapping
 
-The class mapper assumes all fields have a `value` field in the database. This is not true for every field though. For example, a Select Box Link field has a `relation_id` instead of a `value`. In this situation you must tell the class mapper how the field should be mapped. Using the Article example from above, lets assume there is now a field called "Author" which is a Select Box Link field pointing to the "Authors" section.
+The class mapper assumes all fields have a `value` field in the database. This is not true for every field though. For example, a Select Box Link field has a `relation_id` instead of a `value`. In this situation you must tell the class mapper how the field should be mapped. This is done by overloading the `getCustomFieldMapping()` method and returning an array of mappings.
 
-We want to get the Author's ID, and also the Author model if it exists.
+Using the Article example from above, lets assume there is now a field called "Author" which is a Select Box Link field pointing to the "Authors" section. We want to get the Author's ID, and also the Author model if it exists.
 
 ```php
+
     # Create a mapping for the Author field, mapping the id to 'authorId'
-    protected static $fieldMapping = [
-        'author' => [
-            'databaseFieldName' => 'relation_id',
-            'classMemberName' => 'authorId'
-        ],
-    ];
+    protected static function getCustomFieldMapping() {
+        return [
+            'author' => [
+                'databaseFieldName' => 'relation_id',
+                'classMemberName' => 'authorId'
+            ],
+        ];
+    }
 
     # Create a method that allows easy retrieval of an Author object.
     # This assumes the Author class map exists.
