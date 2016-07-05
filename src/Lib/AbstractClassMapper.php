@@ -357,12 +357,12 @@ abstract class AbstractClassMapper
      * @param  array  $fields The data to save. This is generally provided by
      *                        	getData()
      * @return mixed          Entry ID on success or false on failure.
-     * @throws ModelHasNotBeenModified
+     * @throws ModelHasNotBeenModifiedException
      */
     protected function update(array $fields)
     {
         if (!$this->hasBeenModified()) {
-            throw new Exceptions\ModelHasNotBeenModified("The Entry has not been modified. Unable to save.");
+            throw new Exceptions\ModelHasNotBeenModifiedException("The Entry has not been modified. Unable to save.");
         }
 
         $errors = [];
