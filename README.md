@@ -1,7 +1,7 @@
 # Symphony Section Class Mapper
 
-- Version: v0.2.0
-- Date: June 29 2016
+- Version: v0.2.1
+- Date: July 5 2016
 - [Release notes](https://github.com/pointybeard/symphony-classmapper/blob/master/CHANGELOG.md)
 - [GitHub repository](https://github.com/pointybeard/symphony-classmapper)
 
