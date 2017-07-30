@@ -48,8 +48,14 @@ abstract class AbstractClassMapper
     public function toXml() {
         $classname = array_pop(explode('\\', get_called_class()));
         $xml = new XMLElement($classname, NULL, ['id' => $this->id]);
-        foreach(static::getData() as $key => $value) {
-            $xml->appendChild(new XMLElement($key, \General::sanitize($value)));
+        foreach(static::getData() as $key => $values) {
+            if(!is_array($values)) {
+                $values = [$values];
+            }
+
+            foreach($values as $v) {
+                $xml->appendChild(new XMLElement($key, \General::sanitize($v)));
+            }
         }
 
         return $xml;
@@ -144,7 +150,7 @@ abstract class AbstractClassMapper
     {
         self::findSectionFields();
 
-        $sql = "SELECT SQL_CALC_FOUND_ROWS %s, e.id as `id`
+        $sql = "SELECT SQL_CALC_FOUND_ROWS e.id as `id`, %s
         FROM `tbl_entries` AS `e` %s
         WHERE e.section_id = %d AND %s
         ORDER BY e.id ASC";
@@ -157,8 +163,22 @@ abstract class AbstractClassMapper
             $classMemberName = static::$fieldMapping[$fieldHandle]['classMemberName'];
             $joinTableName = static::$fieldMapping[$fieldHandle]['joinTableName'];
 
-            $sqlFields[] = sprintf('%s.%s as `%s`', $joinTableName, $databaseFieldName, $classMemberName);
-            $sqlJoins[] = sprintf('LEFT JOIN `tbl_entries_data_%d` AS `%s` ON %2$s.entry_id = e.id', $fieldId, $joinTableName);
+            if(
+                isset(static::$fieldMapping[$fieldHandle]['flags'])
+                && static::$fieldMapping[$fieldHandle]['flags']['multi'] === true
+            ) {
+                // This field has been flagged as "multi" which means
+                // it contains data over several records. It needs to be handled
+                // differently. We do, however, need the field to show up
+                // to it triggers a call to __set() later on.
+                $sqlFields[] = "NULL as `{$classMemberName}`";
+
+            } else {
+
+                $sqlFields[] = sprintf('%s.%s as `%s`', $joinTableName, $databaseFieldName, $classMemberName);
+                $sqlJoins[] = sprintf('LEFT JOIN `tbl_entries_data_%d` AS `%s` ON %2$s.entry_id = e.id', $fieldId, $joinTableName);
+
+            }
         }
 
         return sprintf($sql, implode("," . PHP_EOL, $sqlFields), implode(PHP_EOL, $sqlJoins), self::getSectionId(), $where);
@@ -216,6 +236,20 @@ abstract class AbstractClassMapper
     }
 
     /**
+     * Given a classMemberName value, this method will return any field mapping
+     * @return array The array for that field mapping
+     */
+     protected static function findCustomFieldMapping($classMemberName) {
+         foreach(static::$fieldMapping as $field) {
+            if($field['classMemberName'] == $classMemberName) {
+                // We found it. Now see if it has any flags.
+                return $field;
+            }
+         }
+         return [];
+     }
+
+    /**
      * This method populates the $sectionFields arrays
      * @return void
      */
@@ -229,6 +263,8 @@ abstract class AbstractClassMapper
             if(!isset(static::$fieldMapping[$handle])) {
                 static::$fieldMapping[$handle] = [];
             }
+
+            static::$fieldMapping[$handle]['fieldId'] = $id;
 
             if(!isset(static::$fieldMapping[$handle]['databaseFieldName'])) {
                 static::$fieldMapping[$handle]['databaseFieldName'] = "value";
@@ -397,11 +433,58 @@ abstract class AbstractClassMapper
      */
     public function __set($name, $value)
     {
+
+        // Need to check to see if this field mapping has any flags associated
+        // e.g. 'multi'. We ONLY do this if the field has not already been
+        // modified. We know this by seeing if the calling method was from
+        // the PDO Database ResultIterator
+        if($this->getCallingMethod() == 'fetch') {
+            $fieldMapping = static::findCustomFieldMapping($name);
+            if(isset($fieldMapping['flags'])){
+
+                // This field has flags. We should handle them here. Currently
+                // the only flag we have is 'multi', but there might be more
+                // in future.
+                if(
+                    isset($fieldMapping['flags']['multi'])
+                    && $fieldMapping['flags']['multi'] == true
+                ) {
+
+                    // Dig into the DB and pull out the entire data set for
+                    // this particular field
+                    $databaseFieldName = $fieldMapping['databaseFieldName'];
+                    $classMemberName = $fieldMapping['classMemberName'];
+                    $joinTableName = $fieldMapping['joinTableName'];
+                    $fieldId = $fieldMapping['fieldId'];
+
+                    $db = SymphonyPDO\Loader::instance();
+                    $query = $db->prepare(sprintf(
+                        "SELECT SQL_CALC_FOUND_ROWS %s.%s as `%s`
+                        FROM `tbl_entries_data_%d` AS `%s`
+                        WHERE %s.entry_id = :id",
+
+                        $joinTableName,
+                        $databaseFieldName,
+                        $classMemberName,
+                        (int)$fieldId,
+                        $joinTableName,
+                        $joinTableName
+                    ));
+                    $query->bindValue(':id', $this->id, \PDO::PARAM_INT);
+                    $result = $query->execute();
+                    $value = $query->fetchAll(\PDO::FETCH_COLUMN);
+                }
+            }
+        }
+
         // Only set the modified flag if this is an exsiting entry, and the
         // value has actually changed.
-        if (!is_null($this->id) && $this->properties[$name] != $value) {
+        // #1 - This won't trigger if the class is being initialised
+        // automatically by PDOStatement fetch().
+        if (!is_null($this->id) && $this->properties[$name] != $value && $this->getCaller() != "PDOStatement::fetch") {
             $this->flagAsModified();
         }
+
         $this->properties[$name] = $value;
     }
 
@@ -458,5 +541,43 @@ abstract class AbstractClassMapper
     public function toArray()
     {
         return $this->properties;
+    }
+
+    /**
+     * This utility method will examine the backtrace and return the method
+     * that made the call to the method that is using this.
+     * @param   Integer $depth  How far into the backtrace we should look.
+     *                          The default is 2, which is this method, the
+     *                          calling method, and the method just before that.
+     * @return  String the name of the method.
+     */
+    private function getCallingMethod($depth = 2) {
+        return debug_backtrace()[$depth]['function'];
+    }
+
+    /**
+     * This utility method will examine the backtrace and return the class
+     * that made the call to the method that is using this.
+     * @param   Integer $depth  How far into the backtrace we should look.
+     *                          The default is 2, which is this method, the
+     *                          calling method, and the method just before that.
+     * @return  String the name of the method.
+     */
+    private function getCallingClass($depth = 2) {
+        return debug_backtrace()[$depth]['class'];
+    }
+
+    /**
+     * This convienence method that combines getCallingClass & getCallingMethod
+     * to return a single string delimited by a double colon.
+     * @param   Integer $depth  How far into the backtrace we should look.
+     *                          The default is 2, which is this method, the
+     *                          calling method, and the method just before that.
+     * @return  String the name of the method.
+     */
+    private function getCaller($depth = 2) {
+        // Important: Add 1 more to the depth since this goes one level deeper
+        // by calling getCallingClass() and getCallingMethod()
+        return sprintf("%s::%s", $this->getCallingClass($depth + 1), $this->getCallingMethod($depth + 1));
     }
 }
