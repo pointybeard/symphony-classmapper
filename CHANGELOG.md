@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.0] - 2018-10-05
+#### Fixed
+- Added getCaller() and getCallingClass() methods. Used by `__set()` when deciding if necessary to flag object as modified. Will not flag if caller was `PDOStatement::fetch` (Fixes #1)
+
+#### Added
+- Added flags option to field mappings. Following flags are available: FLAG_ARRAY, FLAG_BOOL, FLAG_FILE, FLAG_INT, FLAG_STR, FLAG_FLOAT, FLAG_CURRENCY, FLAG_NULL
+
 ## [0.2.1] - 2016-07-5
 #### Fixed
 - Fixed reference to `ModelHasNotBeenModifiedException` in `AbstractClassMapper`
@@ -22,4 +29,6 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 #### Added
 - Initial release
 
+[1.0.0]: https://github.com/pointybeard/symphony-classmapper/compare/0.2.1...1.0.0
+[0.2.1]: https://github.com/pointybeard/symphony-classmapper/compare/0.2.0...0.2.1
 [0.2.0]: https://github.com/pointybeard/symphony-classmapper/compare/0.1.0...0.2.0

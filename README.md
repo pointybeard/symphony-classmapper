@@ -1,7 +1,7 @@
 # Symphony Section Class Mapper
 
-- Version: v0.2.1
-- Date: July 5 2016
+- Version: v1.0.0
+- Date: October 5th 2018
 - [Release notes](https://github.com/pointybeard/symphony-classmapper/blob/master/CHANGELOG.md)
 - [GitHub repository](https://github.com/pointybeard/symphony-classmapper)
 
@@ -109,6 +109,52 @@ Using the Article example from above, lets assume there is now a field called "A
 
 You can see how we quickly wired up the Articles object to know about Authors and how to retrieve them.
 
+### Using Flags
+
+You can specify a `flag` property for custom field mappings. Flags trigger different behaviour when retrieving and saving data. E.g.
+
+```php
+
+    protected static function getCustomFieldMapping() {
+        return [
+            'related-entries' => [
+                'databaseFieldName' => 'relation_id',
+                'classMemberName' => 'relatedEntryIDs',
+                'flag' => self::FLAG_ARRAY | self::FLAG_INT
+            ],
+
+            'published' => [
+                'flag' => self::FLAG_BOOL
+            ],
+        ];
+    }
+
+```
+
+Flags can be combined using the bitwise OR (`|`) operator. Some flags aren't compatible, or don't make sense to combine, with other flags. The following flags exist:
+
+*FLAG_ARRAY*
+Use this when the field has multiple rows of data, like a multi-select. The data
+returned will be an array of values (or `databaseFieldName` if it is set). Can combine with `FLAG_INT`, `FLAG_STR`, `FLAG_FLOAT`, `FLAG_BOOL`, `FLAG_CURRENCY`, and `FLAG_NULL`
+
+*FLAG_BOOL*
+Converts the data coming out of the database from Yes|No into true|false. When
+saving, it is converted back in to a Yes|No value. Can be combined with `FLAG_ARRAY`
+
+*FLAG_FILE*
+When pulling out data, in addition to `file`, this will also grab `size`, `mimetype`, and `meta` values. Saving will pass through only `file`. Can only combine with FLAG_NULL
+
+*FLAG_INT*
+*FLAG_STR*
+*FLAG_FLOAT*
+These flags are used to type cast data being pulled out. Can combine with `FLAG_ARRAY`, in which case all items in the array will be cast to that type.
+
+*FLAG_CURRENCY*
+Similar to float, however, will limit the result to 2 decimal places.
+
+*FLAG_NULL*
+Converts empty values, i.e. int(0), string(""), (array)[] etc, into a `NULL`. Can combine with `FLAG_ARRAY`
+
 ### Providing Custom SQL when fetching
 
 It might be necessary to provide custom SQL to use when the class mapper loads an object. To do this, overload the `fetchSQL` method. It should return an SQL string. You can use the $sectionFields array to easily access the ID values of fields in your section. E.g.
@@ -135,7 +181,7 @@ It might be necessary to provide custom SQL to use when the class mapper loads a
     }
 ```
 
-Note that overloading the fetchSQL method will ignore any field mappings you might have.
+Note that overloading the fetchSQL method will mean you need to handle using the correct field mappings.
 
 ### Modifying data before saving
 
@@ -151,21 +197,6 @@ There are times when you might need to change data on the fly before it is saved
           $data["modified"] = "now";
         }
 
-        return $data;
-    }
-```
-
-Another example might be a checkbox field. The value is normally 'yes' or 'no', however with custom SQL you could make it appear as `true` or `false` in the object. When saving, this needs to be converted to a yes|no value instead. E.g.
-
-```php
-    protected function getData()
-    {
-        $data = parent::getData();
-        $data["published"] = (
-            $this->published == true || strtolower($this->published) == 'yes'
-                ? "Yes"
-                : "No"
-        );
         return $data;
     }
 ```
