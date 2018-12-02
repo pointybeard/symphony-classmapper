@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.1] - 2018-12-02
+#### Changed
+- Included `GROUP BY` clause in `AbstractClassMapper::fetchSQL()`. This prevents duplicate entries when fetching fields with multiple rows (e.g. `FLAG_ARRAY`)
+- Improved error handling in `AbstractClassMapper::update` when entry ID is invalid.
+
 ## [1.0.0] - 2018-10-05
 #### Fixed
 - Added getCaller() and getCallingClass() methods. Used by `__set()` when deciding if necessary to flag object as modified. Will not flag if caller was `PDOStatement::fetch` (Fixes #1)

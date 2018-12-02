@@ -1,7 +1,7 @@
 # Symphony Section Class Mapper
 
-- Version: v1.0.0
-- Date: October 5th 2018
+- Version: v1.0.1
+- Date: December 2nd 2018
 - [Release notes](https://github.com/pointybeard/symphony-classmapper/blob/master/CHANGELOG.md)
 - [GitHub repository](https://github.com/pointybeard/symphony-classmapper)
 
@@ -11,7 +11,7 @@ Maps sections into custom objects, simplifying the process of creating, modifyin
 
 ## Installation
 
-Symphony Class Mapper is installed via [Composer](http://getcomposer.org/). To install, use `composer require pointybeard/symphony-classmapper` or add `"pointybeard/symphony-classmapper": "~0.2"` to your `composer.json` file.
+Symphony Class Mapper is installed via [Composer](http://getcomposer.org/). To install, use `composer require pointybeard/symphony-classmapper` or add `"pointybeard/symphony-classmapper": "~1.0"` to your `composer.json` file.
 
 ## Usage
 
