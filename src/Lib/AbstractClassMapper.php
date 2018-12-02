@@ -205,7 +205,7 @@ abstract class AbstractClassMapper
         $sql = "SELECT SQL_CALC_FOUND_ROWS e.id as `id`, %s
         FROM `tbl_entries` AS `e` %s
         WHERE e.section_id = %d AND %s
-        ORDER BY e.id ASC";
+        GROUP BY e.id ORDER BY e.id ASC";
 
         $sqlFields = $sqlJoins = [];
 
@@ -233,7 +233,13 @@ abstract class AbstractClassMapper
             $sqlJoins[] = sprintf('LEFT JOIN `tbl_entries_data_%d` AS `%s` ON `%2$s`.entry_id = e.id', $fieldId, $joinTableName);
         }
 
-        return sprintf($sql, implode("," . PHP_EOL, $sqlFields), implode(PHP_EOL, $sqlJoins), self::getSectionId(), $where);
+        return sprintf(
+            $sql,
+            implode("," . PHP_EOL, $sqlFields),
+            implode(PHP_EOL, $sqlJoins),
+            self::getSectionId(),
+            $where
+        );
     }
 
     /**
