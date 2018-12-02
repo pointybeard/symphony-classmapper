@@ -2,7 +2,10 @@
 
 namespace Symphony\ClassMapper\Lib;
 
-use \Symphony, \EntryManager, \SectionManager, \XMLElement;
+use \Symphony;
+use \EntryManager;
+use \SectionManager;
+use \XMLElement;
 use SymphonyPDO;
 use Symphony\ClassMapper\Lib\Exceptions;
 
@@ -40,10 +43,11 @@ abstract class AbstractClassMapper
      * @param string $handle Handle of the field to convert
      * @return string        camelCase member name
      */
-    protected static function handleToClassMemberName($handle) {
+    protected static function handleToClassMemberName($handle)
+    {
         $bits = explode('-', $handle);
         $result = array_shift($bits);
-        if(count($bits) > 0) {
+        if (count($bits) > 0) {
             $result .= implode("", array_map('ucfirst', $bits));
         }
         return $result;
@@ -54,15 +58,16 @@ abstract class AbstractClassMapper
      * in the model.
      * @return XMLElement The XML representation of this model
      */
-    public function toXml() {
+    public function toXml()
+    {
         $classname = array_pop(explode('\\', get_called_class()));
-        $xml = new XMLElement($classname, NULL, ['id' => $this->id]);
-        foreach(static::getData() as $key => $values) {
-            if(!is_array($values)) {
+        $xml = new XMLElement($classname, null, ['id' => $this->id]);
+        foreach (static::getData() as $key => $values) {
+            if (!is_array($values)) {
                 $values = [$values];
             }
 
-            foreach($values as $v) {
+            foreach ($values as $v) {
                 $xml->appendChild(new XMLElement($key, \General::sanitize($v)));
             }
         }
@@ -79,7 +84,8 @@ abstract class AbstractClassMapper
      *                       the input.
      * @usedby getSectionHandleFromClassName()
      */
-    private static function pluralise($input) {
+    private static function pluralise($input)
+    {
         return ["{$input}s", "{$input}es", substr($input, 0, -1) . "ies"];
     }
 
@@ -89,17 +95,15 @@ abstract class AbstractClassMapper
      * @throws SectionNotFoundException
      * @usedby getSectionId(), save()
      */
-    private static function getSectionHandleFromClassName() {
-
-        if(is_null(static::$section) || empty(static::$section)) {
-
-            if(defined(get_called_class() . "::SECTION")){
+    private static function getSectionHandleFromClassName()
+    {
+        if (is_null(static::$section) || empty(static::$section)) {
+            if (defined(get_called_class() . "::SECTION")) {
 
                 // The next part expects to get an array of possible section
                 // handles. Given the child class has a pre-defined
                 // section mapping, use that.
                 $sectionHandles = [static::SECTION];
-
             } else {
 
                 // Let figure out the section handle
@@ -124,7 +128,7 @@ abstract class AbstractClassMapper
                 );
 
             // Result was ambiguous. Pluraisation returned more than 1 matching section
-            } elseif($query->rowCount() > 1) {
+            } elseif ($query->rowCount() > 1) {
                 throw new Exceptions\SectionNotFoundException(
                     "Unable to find section from class name '".get_called_class()."': ambiguous section name. Pluralisation returned more than 1 result."
                 );
@@ -148,7 +152,7 @@ abstract class AbstractClassMapper
 
         self::findSectionFields();
 
-        foreach(static::$sectionFields as $fieldHandle => $fieldId) {
+        foreach (static::$sectionFields as $fieldHandle => $fieldId) {
             $classMemberName = static::$fieldMapping[$fieldHandle]['classMemberName'];
             $flags = static::$fieldMapping[$fieldHandle]['flags'];
             $data[$fieldHandle] = $this->$classMemberName;
@@ -156,23 +160,22 @@ abstract class AbstractClassMapper
             // ClassMapper currently doesn't support uploading files. Just send
             // along the file name so we don't trigger the Upload field to think
             // this is an upload attempt.
-            if(self::isFlagSet($flags, self::FLAG_FILE)) {
+            if (self::isFlagSet($flags, self::FLAG_FILE)) {
                 $data[$fieldHandle] = $data[$fieldHandle]['file'];
             }
 
             // The BOOL flag, which is ostensibliy a checkbox field, needs to
             // be converted into either 'Yes' or 'No'.
-            if(self::isFlagSet($flags, self::FLAG_BOOL)) {
-                $func = function($input) {
+            if (self::isFlagSet($flags, self::FLAG_BOOL)) {
+                $func = function ($input) {
                     return ($input === true || strtolower($input) == 'yes')
                         ? "Yes"
                         : "No"
                     ;
                 };
 
-                if(self::isFlagSet($flags, self::FLAG_ARRAY)) {
+                if (self::isFlagSet($flags, self::FLAG_ARRAY)) {
                     $data[$fieldHandle] = array_map($func, $this->$classMemberName);
-
                 } else {
                     $data[$fieldHandle] = $func($this->$classMemberName);
                 }
@@ -187,7 +190,8 @@ abstract class AbstractClassMapper
      *
      * @return boolean true if the flag is set
      */
-    protected static function isFlagSet($flags, $flag) {
+    protected static function isFlagSet($flags, $flag)
+    {
         // Flags support bitwise operators so it's easy to see
         // if one has been set.
         return ($flags & $flag) == $flag;
@@ -209,8 +213,7 @@ abstract class AbstractClassMapper
 
         $sqlFields = $sqlJoins = [];
 
-        foreach(static::$sectionFields as $fieldHandle => $fieldId) {
-
+        foreach (static::$sectionFields as $fieldHandle => $fieldId) {
             $databaseFieldName = static::$fieldMapping[$fieldHandle]['databaseFieldName'];
             $classMemberName = static::$fieldMapping[$fieldHandle]['classMemberName'];
             $joinTableName = static::$fieldMapping[$fieldHandle]['joinTableName'];
@@ -222,12 +225,9 @@ abstract class AbstractClassMapper
                 // differently. We do, however, need the field to show up
                 // to it triggers a call to __set() later on.
                 $sqlFields[] = "NULL as `{$classMemberName}`";
-
             } elseif (self::isFlagSet($flags, self::FLAG_FILE)) {
                 $sqlFields[] = "NULL as `{$classMemberName}`";
-
             } else {
-
                 $sqlFields[] = sprintf('`%s`.`%s` as `%s`', $joinTableName, $databaseFieldName, $classMemberName);
             }
             $sqlJoins[] = sprintf('LEFT JOIN `tbl_entries_data_%d` AS `%s` ON `%2$s`.entry_id = e.id', $fieldId, $joinTableName);
@@ -280,7 +280,8 @@ abstract class AbstractClassMapper
      * @param  string $handle Field handle
      * @return string         The internal join table name
      */
-    protected static function findJoinTableFieldName($handle) {
+    protected static function findJoinTableFieldName($handle)
+    {
         return static::$fieldMapping[$handle]['joinTableName'];
     }
 
@@ -289,7 +290,8 @@ abstract class AbstractClassMapper
      * @return array The array of mappings
      * @usedby populateFieldMapping
      */
-    protected static function getCustomFieldMapping() {
+    protected static function getCustomFieldMapping()
+    {
         return [];
     }
 
@@ -297,37 +299,38 @@ abstract class AbstractClassMapper
      * Given a classMemberName value, this method will return any field mapping
      * @return array The array for that field mapping
      */
-     protected static function findCustomFieldMapping($classMemberName) {
-         foreach(static::$fieldMapping as $field) {
-            if($field['classMemberName'] == $classMemberName) {
+    protected static function findCustomFieldMapping($classMemberName)
+    {
+        foreach (static::$fieldMapping as $field) {
+            if ($field['classMemberName'] == $classMemberName) {
                 return $field;
             }
-         }
-         return [];
-     }
+        }
+        return [];
+    }
 
     /**
      * This method populates the $sectionFields arrays
      * @return void
      */
-    private static function populateFieldMapping() {
+    private static function populateFieldMapping()
+    {
 
         // Look for any custom field mappings the model might be providing
         static::$fieldMapping = static::getCustomFieldMapping();
 
-        foreach(static::$sectionFields as $handle => $id) {
-
-            if(!isset(static::$fieldMapping[$handle])) {
+        foreach (static::$sectionFields as $handle => $id) {
+            if (!isset(static::$fieldMapping[$handle])) {
                 static::$fieldMapping[$handle] = [];
             }
 
             static::$fieldMapping[$handle]['fieldId'] = $id;
 
-            if(!isset(static::$fieldMapping[$handle]['databaseFieldName'])) {
+            if (!isset(static::$fieldMapping[$handle]['databaseFieldName'])) {
                 static::$fieldMapping[$handle]['databaseFieldName'] = "value";
             }
 
-            if(!isset(static::$fieldMapping[$handle]['classMemberName'])) {
+            if (!isset(static::$fieldMapping[$handle]['classMemberName'])) {
                 static::$fieldMapping[$handle]['classMemberName'] = self::handleToClassMemberName($handle);
             }
 
@@ -347,7 +350,6 @@ abstract class AbstractClassMapper
      */
     protected static function findSectionFields($populateFieldMapping = true)
     {
-
         if (isset(static::$sectionFields) && !empty(static::$sectionFields)) {
             return static::$sectionFields;
         }
@@ -369,7 +371,7 @@ abstract class AbstractClassMapper
         static::$sectionFields = $fields;
 
         // Generally we always want to update the field mappings
-        if($populateFieldMapping == true) {
+        if ($populateFieldMapping == true) {
             static::populateFieldMapping();
         }
 
@@ -461,12 +463,12 @@ abstract class AbstractClassMapper
         }
 
         $errors = [];
-        if(is_null($this->id) || (int)$this->id <= 0) {
+        if (is_null($this->id) || (int)$this->id <= 0) {
             throw new Exception("No entry ID has been set. Unable to update.");
         }
 
         $entry = EntryManager::fetch($this->id)[0];
-        if(!($entry instanceof Entry)) {
+        if (!($entry instanceof Entry)) {
             throw new Exceptions\ModelEntryNotFoundException("Entry with id {$this->id} could not be located.");
         }
 
@@ -504,16 +506,15 @@ abstract class AbstractClassMapper
         // e.g. 'multi'. We ONLY do this if the field has not already been
         // modified. We know this by seeing if the calling method was from
         // the PDO Database ResultIterator
-        if($this->getCallingMethod() == 'fetch') {
+        if ($this->getCallingMethod() == 'fetch') {
             $fieldMapping = static::findCustomFieldMapping($name);
-            if(isset($fieldMapping['flags'])){
-
+            if (isset($fieldMapping['flags'])) {
                 $flags = $fieldMapping['flags'];
 
                 // Files have extra, useful, fields like size and context
                 // specific metadata. We need to retain that information
                 // if the FLAG_FILE flag is set.
-                if(self::isFlagSet($flags, self::FLAG_FILE)) {
+                if (self::isFlagSet($flags, self::FLAG_FILE)) {
                     $databaseFieldName = $fieldMapping['databaseFieldName'];
                     $classMemberName = $fieldMapping['classMemberName'];
                     $joinTableName = $fieldMapping['joinTableName'];
@@ -537,7 +538,7 @@ abstract class AbstractClassMapper
                 // link, tag, or mulit-select fields. This pulls out the data
                 // as a set and assigns it as an array rather than a
                 // basic string value.
-                if(self::isFlagSet($flags, self::FLAG_ARRAY)) {
+                if (self::isFlagSet($flags, self::FLAG_ARRAY)) {
                     $databaseFieldName = $fieldMapping['databaseFieldName'];
                     $classMemberName = $fieldMapping['classMemberName'];
                     $joinTableName = $fieldMapping['joinTableName'];
@@ -561,60 +562,52 @@ abstract class AbstractClassMapper
                     // FLAG_ARRAY supports some of the type flags. Run through
                     // and see if any are set. Apply the type conversion to all
                     // items in the array.
-                    if(self::isFlagSet($flags, self::FLAG_BOOL)) {
-                        $func = function($input){
+                    if (self::isFlagSet($flags, self::FLAG_BOOL)) {
+                        $func = function ($input) {
                             return (strtolower($value) == 'yes' || $value === true);
                         };
                         $value = array_map($func, $value);
-
-                    } elseif(self::isFlagSet($flags, self::FLAG_INT)) {
+                    } elseif (self::isFlagSet($flags, self::FLAG_INT)) {
                         $value = array_map('intval', $value);
-
-                    } elseif(self::isFlagSet($flags, self::FLAG_STR)) {
+                    } elseif (self::isFlagSet($flags, self::FLAG_STR)) {
                         $value = array_map('strval', $value);
-
-                    } elseif(self::isFlagSet($flags, self::FLAG_FLOAT)) {
+                    } elseif (self::isFlagSet($flags, self::FLAG_FLOAT)) {
                         $value = array_map('floatval', $value);
-
-                    } elseif(self::isFlagSet($flags, self::FLAG_CURRENCY)) {
-                        $func = function($input){
-                            return (float)number_format((float)$value, 2, NULL, NULL);
+                    } elseif (self::isFlagSet($flags, self::FLAG_CURRENCY)) {
+                        $func = function ($input) {
+                            return (float)number_format((float)$value, 2, null, null);
                         };
                         $value = array_map($func, $value);
                     }
 
-                // If FLAG_ARRAY isn't set, we still need to check for type
+                    // If FLAG_ARRAY isn't set, we still need to check for type
                 // flags. Apply the type conversion to the value. Note, it
                 // doesn't make sense to combine these flags. e.g.
                 // FLAG_BOOL | FLAG_CURRENCY so just assume one is only ever
                 // set.
-                } elseif(self::isFlagSet($flags, self::FLAG_BOOL)) {
+                } elseif (self::isFlagSet($flags, self::FLAG_BOOL)) {
                     $value = (strtolower($value) == 'yes' || $value === true);
-
-                } elseif(self::isFlagSet($flags, self::FLAG_INT)) {
+                } elseif (self::isFlagSet($flags, self::FLAG_INT)) {
                     $value = (int)$value;
-
-                } elseif(self::isFlagSet($flags, self::FLAG_STR)) {
+                } elseif (self::isFlagSet($flags, self::FLAG_STR)) {
                     $value = (string)$value;
-
-                } elseif(self::isFlagSet($flags, self::FLAG_FLOAT)) {
+                } elseif (self::isFlagSet($flags, self::FLAG_FLOAT)) {
                     $value = (float)$value;
-
-                } elseif(self::isFlagSet($flags, self::FLAG_CURRENCY)) {
-                    $value = (float)number_format((float)$value, 2, NULL, NULL);
+                } elseif (self::isFlagSet($flags, self::FLAG_CURRENCY)) {
+                    $value = (float)number_format((float)$value, 2, null, null);
                 }
 
                 // If the FLAG_NULL flag is set, we need to convert empty values
                 // i.e. int(0), string(""), (array)[], into a NULL. FLAG_ARRAY
                 // supports combining with FLAG_NULL.
-                if(self::isFlagSet($flags, self::FLAG_NULL)) {
-                    if(is_array($value) && !empty($value)) {
-                        $func = function($input){
-                            return empty($input) ? NULL : $input;
+                if (self::isFlagSet($flags, self::FLAG_NULL)) {
+                    if (is_array($value) && !empty($value)) {
+                        $func = function ($input) {
+                            return empty($input) ? null : $input;
                         };
                         $value = array_map($func, $value);
                     } else {
-                        $value = empty($value) ? NULL : $value;
+                        $value = empty($value) ? null : $value;
                     }
                 }
             }
@@ -694,7 +687,8 @@ abstract class AbstractClassMapper
      *                          calling method, and the method just before that.
      * @return  String the name of the method.
      */
-    private function getCallingMethod($depth = 2) {
+    private function getCallingMethod($depth = 2)
+    {
         return debug_backtrace()[$depth]['function'];
     }
 
@@ -706,7 +700,8 @@ abstract class AbstractClassMapper
      *                          calling method, and the method just before that.
      * @return  String the name of the method.
      */
-    private function getCallingClass($depth = 2) {
+    private function getCallingClass($depth = 2)
+    {
         return debug_backtrace()[$depth]['class'];
     }
 
@@ -718,7 +713,8 @@ abstract class AbstractClassMapper
      *                          calling method, and the method just before that.
      * @return  String the name of the method.
      */
-    private function getCaller($depth = 2) {
+    private function getCaller($depth = 2)
+    {
         // Important: Add 1 more to the depth since this goes one level deeper
         // by calling getCallingClass() and getCallingMethod()
         return sprintf("%s::%s", $this->getCallingClass($depth + 1), $this->getCallingMethod($depth + 1));
