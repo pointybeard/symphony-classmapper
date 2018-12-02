@@ -455,7 +455,14 @@ abstract class AbstractClassMapper
         }
 
         $errors = [];
+        if(is_null($this->id) || (int)$this->id <= 0) {
+            throw new Exception("No entry ID has been set. Unable to update.");
+        }
+
         $entry = EntryManager::fetch($this->id)[0];
+        if(!($entry instanceof Entry)) {
+            throw new Exceptions\ModelEntryNotFoundException("Entry with id {$this->id} could not be located.");
+        }
 
         $entry->setDataFromPost($fields, $errors);
 
