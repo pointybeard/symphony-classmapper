@@ -468,7 +468,7 @@ abstract class AbstractClassMapper
         }
 
         $entry = EntryManager::fetch($this->id)[0];
-        if (!($entry instanceof Entry)) {
+        if (!($entry instanceof \Entry)) {
             throw new Exceptions\ModelEntryNotFoundException("Entry with id {$this->id} could not be located.");
         }
 
