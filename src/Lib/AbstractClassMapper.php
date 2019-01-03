@@ -54,21 +54,23 @@ abstract class AbstractClassMapper
     }
 
     /**
-     * Generates an XMLElement document representation of the data stored
-     * in the model.
-     * @return XMLElement The XML representation of this model
+     * Generates an XMLElement (or object the extends XMLElement) object
+     * representation of the data stored in the model.
+     * @param string $class class used to populate return value. Default is
+     *                      \XMLElement.
+     * @return mixed The XML representation of this model
      */
-    public function toXml()
+    public function toXml($class="\XMLElement")
     {
         $classname = array_pop(explode('\\', get_called_class()));
-        $xml = new XMLElement($classname, null, ['id' => $this->id]);
+        $xml = new $class($classname, null, ['id' => $this->id]);
         foreach (static::getData() as $key => $values) {
             if (!is_array($values)) {
                 $values = [$values];
             }
 
             foreach ($values as $v) {
-                $xml->appendChild(new XMLElement($key, \General::sanitize($v)));
+                $xml->appendChild(new $class($key, \General::sanitize($v)));
             }
         }
 
