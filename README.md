@@ -1,30 +1,36 @@
 # Symphony CMS: Section Class Mapper
 
-- Version: v1.0.4
-- Date: May 31 2019
+- Version: v2.0.0
+- Date: May 14th 2019
 - [Release notes](https://github.com/pointybeard/symphony-classmapper/blob/master/CHANGELOG.md)
 - [GitHub repository](https://github.com/pointybeard/symphony-classmapper)
 
-Maps sections into custom objects, simplifying the process of creating, modifying, deleting and fetching entries in [Symphony CMS](http://www.getsymphony.com/).
+[![Latest Stable Version](https://poser.pugx.org/pointybeard/symphony-classmapper/version)](https://packagist.org/packages/pointybeard/symphony-classmapper) [![License](https://poser.pugx.org/pointybeard/symphony-classmapper/license)](https://packagist.org/packages/pointybeard/symphony-classmapper)
+
+Maps sections into custom model classes, simplifying the process of creating, modifying, deleting and fetching entries in Symphony CMS.
+
+## Requirements
+
+This library requires PHP 7.2 or later. For use with earlier version of PHP, please use 1.0.x instead (`composer require pointybeard/symphony-classmapper:\<2.0`).
 
 ## Installation
 
-Symphony Class Mapper is installed via [Composer](http://getcomposer.org/). To install, use `composer require pointybeard/symphony-classmapper` or add `"pointybeard/symphony-classmapper": "~1.0.0"` to your `composer.json` file.
+Symphony Class Mapper is installed via [Composer](http://getcomposer.org/). To install, use `composer require pointybeard/symphony-classmapper` or add `"pointybeard/symphony-classmapper": "~2.0"` to your `composer.json` file.
 
 ## Usage
 
-To use the Class Mapper, simply extend `AbstractClassMapper`, and use `Trait\hasClassMapperTrait`. E.g. assuming you have a section called 'articles' with a single field 'title':
+To use the Class Mapper, simply extend `AbstractModel`, and use `Trait\hasClassMapperTrait`. E.g. assuming you have a section called 'articles' with a single field 'title':
 
 ```php
     <?php
 
     namespace Your\Project\Namespace;
 
-    use Symphony\ClassMapper\Lib;
+    use Symphony\ClassMapper\ClassMapper;
 
-    final class Article extends Lib\AbstractClassMapper
+    final class Article extends ClassMapper\AbstractModel
     {
-        use Lib\Traits\hasClassMapperTrait;
+        use ClassMapper\Traits\hasClassMapperTrait;
     }
 ```
 
@@ -153,6 +159,17 @@ Similar to float, however, will limit the result to 2 decimal places.
 *FLAG_NULL*
 Converts empty values, i.e. int(0), string(""), (array)[] etc, into a `NULL`. Can combine with `FLAG_ARRAY`
 
+### Sorting Results
+
+*FLAG_SORTBY*
+@TODO
+
+*FLAG_SORTDESC*
+@TODO
+
+*FLAG_SORTASC*
+@TODO
+
 ### Providing Custom SQL when fetching
 
 It might be necessary to provide custom SQL to use when the class mapper loads an object. To do this, overload the `fetchSQL` method. It should return an SQL string. You can use the $sectionFields array to easily access the ID values of fields in your section. E.g.
@@ -198,6 +215,19 @@ There are times when you might need to change data on the fly before it is saved
         return $data;
     }
 ```
+
+### Validation when Saving
+
+@TODO
+
+*FLAG_REQUIRED*
+@TODO
+
+*FLAG_ON_SAVE_VALIDATE*
+@TODO
+
+*FLAG_ON_SAVE_ENFORCE_MODIFIED*
+@TODO
 
 ### Creating a custom fetch method
 

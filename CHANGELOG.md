@@ -3,11 +3,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.0] - 2019-05-14
+@TODO
+
 ## [1.0.4][] - 2019-01-03
 #### Added
 -   Added `getDatabaseConnection()`, `bindToDatabase()`, and `unbindFromDatabase()` static methods in `AbstractClassMapper`.
 -   Using `self::getDatabaseConnection()` instead of `SymphonyPDO\Loader::instance()` internally in `AbstractClassMapper`.
-
 
 #### Changed
 -   Removed `composer.lock` from repo
@@ -54,6 +56,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 #### Added
 - Initial release
 
+[2.0.0]: https://github.com/pointybeard/symphony-classmapper/compare/1.0.4...2.0.0
 [1.0.4]: https://github.com/pointybeard/symphony-classmapper/compare/1.0.3...1.0.4
 [1.0.3]: https://github.com/pointybeard/symphony-classmapper/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/pointybeard/symphony-classmapper/compare/1.0.1...1.0.2
