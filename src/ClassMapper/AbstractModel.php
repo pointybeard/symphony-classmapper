@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace Symphony\ClassMapper\Lib;
+namespace Symphony\ClassMapper\ClassMapper;
 
 use Symphony;
 use EntryManager;
@@ -8,12 +8,14 @@ use SectionManager;
 use XMLElement;
 use SymphonyPDO;
 
+use Symphony\ClassMapper\ClassMapper\Exceptions;
+use pointybeard\Helpers\Functions\Flags;
+
 /**
- * AbstractClassMapper
- * Does all the heavy lifing for the Class Mapper. Extend this ClassMapper
- * to use this library.
+ * AbstractModel
+ * Does all the heavy lifing for the Class Mapper library
  */
-abstract class AbstractClassMapper
+abstract class AbstractModel
 {
     const FLAG_ARRAY = 0x0001;
     const FLAG_BOOL = 0x0002;
@@ -23,6 +25,15 @@ abstract class AbstractClassMapper
     const FLAG_FLOAT = 0x0020;
     const FLAG_CURRENCY = 0x0040;
     const FLAG_NULL = 0x0080;
+
+    const FLAG_SORTBY = 0x0100;
+    const FLAG_SORTDESC = 0x200;
+    const FLAG_SORTASC = 0x0400;
+
+    const FLAG_REQUIRED = 0x0800;
+
+    const FLAG_ON_SAVE_VALIDATE = 0x1000;
+    const FLAG_ON_SAVE_ENFORCE_MODIFIED = 0x2000;
 
     /**
      * Holds the actual data for this model.
@@ -37,6 +48,27 @@ abstract class AbstractClassMapper
      * @var bool
      */
     protected $hasBeenModified = false;
+
+    protected $filters = [];
+
+    protected $filteredResultIterator = null;
+
+    // Currently this only checks for required fields, however, it could be
+    // overloaded to check for other things.
+    public function validate() : bool
+    {
+        foreach ($this->getData() as $field => $data) {
+            $flags = static::$fieldMapping[$field]['flags'];
+            if (Flags\is_flag_set($flags, self::FLAG_REQUIRED) && empty($data)) {
+                throw new Exceptions\ModelValidationFailedException(
+                    static::class,
+                    $field,
+                    "Required field was not set."
+                );
+            }
+        }
+        return true;
+    }
 
     /**
      * Connection to the Symphony database.
@@ -82,7 +114,7 @@ abstract class AbstractClassMapper
      *
      * @return string camelCase member name
      */
-    protected static function handleToClassMemberName($handle)
+    protected static function handleToClassMemberName(string $handle) : string
     {
         $bits = explode('-', $handle);
         $result = array_shift($bits);
@@ -94,29 +126,51 @@ abstract class AbstractClassMapper
     }
 
     /**
+     * @param String $class Fully qualitied class name. Must be XMLElement or
+     *                      extend \XMLElement
+     * @return XMLElement instance of $class provided
+     */
+    protected function createXMLContainer(string $class = "\XMLElement") : \XMLElement
+    {
+        return new $class(
+            (new \ReflectionClass(static::class))->getShortName(),
+            null,
+            ["id" => $this->id]
+        );
+    }
+
+    /**
      * Generates an XMLElement (or object the extends XMLElement) object
      * representation of the data stored in the model.
-     *
-     * @param string $class class used to populate return value. Default is
-     *                      \XMLElement.
-     *
-     * @return mixed The XML representation of this model
+     * @param \XMLElement $container Container that new elements will
+     *                               be appended to. Must be instance
+     *                               of \XMLElement or class that extends
+     *                               \XMLElement, or NULL. If not container
+     *                               is provided, createXMLContainer() will be
+     *                               called.
+     * @return \XMLElement The XML representation of this model
      */
-    public function toXml($class = "\XMLElement")
+    public function toXml(\XMLElement $container = null) : \XMLElement
     {
-        $classname = array_pop(explode('\\', get_called_class()));
-        $xml = new $class($classname, null, ['id' => $this->id]);
+        // Create the container object if none was provided
+        if (is_null($container)) {
+            $container = static::createXMLContainer();
+        }
+
+        // Child elements need to be of the same type as $container
+        $class = (new \ReflectionClass($container))->getName();
+
         foreach (static::getData() as $key => $values) {
             if (!is_array($values)) {
                 $values = [$values];
             }
 
             foreach ($values as $v) {
-                $xml->appendChild(new $class($key, \General::sanitize($v)));
+                $container->appendChild(new $class($key, \General::sanitize($v)));
             }
         }
 
-        return $xml;
+        return $container;
     }
 
     /**
@@ -130,7 +184,7 @@ abstract class AbstractClassMapper
      *               the input
      * @usedby getSectionHandleFromClassName()
      */
-    private static function pluralise($input)
+    private static function pluralise(string $input) : array
     {
         return ["{$input}s", "{$input}es", substr($input, 0, -1).'ies'];
     }
@@ -143,20 +197,20 @@ abstract class AbstractClassMapper
      * @throws SectionNotFoundException
      * @usedby getSectionId(), save()
      */
-    private static function getSectionHandleFromClassName()
+    private static function getSectionHandleFromClassName() : string
     {
         if (null === static::$section || empty(static::$section)) {
-            if (defined(get_called_class().'::SECTION')) {
+            if (defined(static::class . "::SECTION")) {
                 // The next part expects to get an array of possible section
                 // handles. Given the child class has a pre-defined
                 // section mapping, use that.
                 $sectionHandles = [static::SECTION];
             } else {
                 // Let figure out the section handle
-                $class = strtolower(array_pop(explode('\\', get_called_class())));
-
                 // Assume it is singular, and look for a pluralised section handles
-                $sectionHandles = self::pluralise($class);
+                $sectionHandles = self::pluralise(strtolower(
+                    (new \ReflectionClass(static::class))->getShortName()
+                ));
             }
 
             // Check the database for a matching section
@@ -169,13 +223,13 @@ abstract class AbstractClassMapper
             // Unable to find any matching section
             if ($query->rowCount() <= 0) {
                 throw new Exceptions\SectionNotFoundException(
-                    "Unable to find section from class name '".get_called_class()."': no section could be located"
+                    "Unable to find section from class name '".static::class."': no section could be located"
                 );
 
             // Result was ambiguous. Pluraisation returned more than 1 matching section
             } elseif ($query->rowCount() > 1) {
                 throw new Exceptions\SectionNotFoundException(
-                    "Unable to find section from class name '".get_called_class()."': ambiguous section name. Pluralisation returned more than 1 result."
+                    "Unable to find section from class name '".static::class."': ambiguous section name. Pluralisation returned more than 1 result."
                 );
             }
 
@@ -191,11 +245,11 @@ abstract class AbstractClassMapper
      *
      * @return array key/value pairs
      */
-    protected function getData()
+    protected function getData() : array
     {
         $data = [];
 
-        self::findSectionFields();
+        static::findSectionFields();
 
         foreach (static::$sectionFields as $fieldHandle => $fieldId) {
             $classMemberName = static::$fieldMapping[$fieldHandle]['classMemberName'];
@@ -231,27 +285,13 @@ abstract class AbstractClassMapper
     }
 
     /**
-     * Convienence method for determining if a FLAG_* constant is set.
-     *
-     * @return bool true if the flag is set
+     * Builds out the SQL needed to fetch data for this object
+     * @param  string $where custom SQL WHERE clause to append
+     * @return string         the SQL to be executed
      */
-    protected static function isFlagSet($flags, $flag)
+    protected static function fetchSQL(string $where=null) : string
     {
-        // Flags support bitwise operators so it's easy to see
-        // if one has been set.
-        return ($flags & $flag) == $flag;
-    }
-
-    /**
-     * Builds out the SQL needed to fetch data for this object.
-     *
-     * @param string $where custom SQL WHERE clause to append
-     *
-     * @return string the SQL to be executed
-     */
-    protected static function fetchSQL($where = 1)
-    {
-        self::findSectionFields();
+        static::findSectionFields();
 
         $sql = 'SELECT SQL_CALC_FOUND_ROWS e.id as `id`, %s
         FROM `tbl_entries` AS `e` %s
@@ -285,7 +325,7 @@ abstract class AbstractClassMapper
             implode(','.PHP_EOL, $sqlFields),
             implode(PHP_EOL, $sqlJoins),
             self::getSectionId(),
-            $where
+            is_null($where) ? 1 : $where
         );
     }
 
@@ -295,15 +335,13 @@ abstract class AbstractClassMapper
      * @return ResultIterator An iterator of all results found. Each item in The
      *                        iterator is of the model type.
      */
-    public static function all()
+    public static function all() : SymphonyPDO\Lib\ResultIterator
     {
-        static::$sectionFields = [];
-        self::findSectionFields();
+        static::findSectionFields(true, true);
         $query = self::getDatabaseConnection()->prepare(static::fetchSQL());
-
         $query->execute();
 
-        return new SymphonyPDO\Lib\ResultIterator(get_called_class(), $query);
+        return (new SymphonyPDO\Lib\ResultIterator(static::class, $query));
     }
 
     /**
@@ -314,14 +352,32 @@ abstract class AbstractClassMapper
      * @return mixed Returns the first item found. The type is
      *               the same as The calling class.
      */
-    public static function loadFromId($entryId)
+    public static function loadFromId(int $entryId) : self
     {
         self::findSectionFields();
         $query = self::getDatabaseConnection()->prepare(static::fetchSQL('e.id = :id').' LIMIT 1');
         $query->bindValue(':id', $entryId, \PDO::PARAM_INT);
         $query->execute();
 
-        return (new SymphonyPDO\Lib\ResultIterator(get_called_class(), $query))->current();
+        return (new SymphonyPDO\Lib\ResultIterator(static::class, $query))->current();
+    }
+
+    public static function fetchFromIdList(array $ids) : SymphonyPDO\Lib\ResultIterator
+    {
+        static::findSectionFields();
+        $db = SymphonyPDO\Loader::instance();
+        $query = $db->prepare(static::fetchSQL(sprintf(
+            'e.id IN (%s)',
+            implode(',', $ids)
+        )));
+        $query->execute();
+        return (new SymphonyPDO\Lib\ResultIterator(static::class, $query));
+    }
+
+    public static function fetchSymphonyField(string $field) : \Field
+    {
+        static::findSectionFields();
+        return \FieldManager::fetch(static::$sectionFields[$field]);
     }
 
     /**
@@ -332,7 +388,7 @@ abstract class AbstractClassMapper
      *
      * @return string The internal join table name
      */
-    protected static function findJoinTableFieldName($handle)
+    protected static function findJoinTableFieldName(string $handle) : string
     {
         return static::$fieldMapping[$handle]['joinTableName'];
     }
@@ -343,7 +399,7 @@ abstract class AbstractClassMapper
      * @return array The array of mappings
      * @usedby populateFieldMapping
      */
-    protected static function getCustomFieldMapping()
+    protected static function getCustomFieldMapping() : array
     {
         return [];
     }
@@ -353,7 +409,7 @@ abstract class AbstractClassMapper
      *
      * @return array The array for that field mapping
      */
-    protected static function findCustomFieldMapping($classMemberName)
+    protected static function findCustomFieldMapping(string $classMemberName) : array
     {
         foreach (static::$fieldMapping as $field) {
             if ($field['classMemberName'] == $classMemberName) {
@@ -367,7 +423,7 @@ abstract class AbstractClassMapper
     /**
      * This method populates the $sectionFields arrays.
      */
-    private static function populateFieldMapping()
+    private static function populateFieldMapping() : void
     {
         // Look for any custom field mappings the model might be providing
         static::$fieldMapping = static::getCustomFieldMapping();
@@ -403,7 +459,7 @@ abstract class AbstractClassMapper
      * @return array The array of field element name to
      *               id mapping
      */
-    protected static function findSectionFields($populateFieldMapping = true, $force = false)
+    protected static function findSectionFields(bool $populateFieldMapping = true, bool $force = false) : array
     {
         if (false == $force && isset(static::$sectionFields) && !empty(static::$sectionFields)) {
             return static::$sectionFields;
@@ -463,9 +519,13 @@ abstract class AbstractClassMapper
      *
      * @return mixed Returns $this instance
      */
-    public function save($sectionHandle = null)
+    public function save(int $flags=self::FLAG_ON_SAVE_VALIDATE, string $sectionHandle=null) : self
     {
-        if (null === $sectionHandle) {
+        if (Flags\is_flag_set($flags, self::FLAG_ON_SAVE_VALIDATE)) {
+            static::validate();
+        }
+
+        if (is_null($sectionHandle)) {
             $sectionHandle = static::getSectionHandleFromClassName();
         }
 
@@ -473,7 +533,16 @@ abstract class AbstractClassMapper
         Symphony::Database()->disableLogging();
 
         if (null !== $this->id) {
-            $this->update($this->getData());
+            try {
+                $this->update($this->getData());
+            } catch (Exceptions\ModelHasNotBeenModifiedException $ex) {
+
+                // If the enforce modified flag is set, rethrow the exception,
+                // otherwise ignore it.
+                if (Flags\is_flag_set($flags, self::FLAG_ON_SAVE_ENFORCE_MODIFIED)) {
+                    throw $ex;
+                }
+            }
         } else {
             $this->id = $this->create($this->getData(), $sectionHandle);
         }
@@ -485,15 +554,13 @@ abstract class AbstractClassMapper
     }
 
     /**
-     * Uses Symphony's EntryManager to create a new entry.
-     *
-     * @param array  $fields  The data to save. This is generally provided by
-     *                        getData()
-     * @param string $section handle of the section the the entry is saved to
-     *
-     * @return mixed entry ID on success or false on failure
+     * Uses Symphony's EntryManager to create a new entry
+     * @param  array  $fields  The data to save. This is generally provided by
+     *                         	getData()
+     * @param  string $section Handle of the section the the entry is saved to.
+     * @return mixed          Entry ID on success or null on failure.
      */
-    protected function create(array $fields, $section)
+    protected function create(array $fields, string $section, array &$errors = null) : ?int
     {
         $errors = [];
         $entry = EntryManager::create();
@@ -501,7 +568,7 @@ abstract class AbstractClassMapper
         $entry->setDataFromPost($fields, $errors);
 
         $entry->commit();
-        $result = (count($errors) > 0 ? false : $entry->get('id'));
+        $result = (count($errors) > 0 ? null : $entry->get('id'));
 
         // Cleanup
         unset($entry);
@@ -513,15 +580,12 @@ abstract class AbstractClassMapper
      * Uses Symphony's EntryManager to update a new entry. if there has not been
      * and modification (i.e. hasBeenModified() returns false), this method will
      * throw an exception.
-     *
-     * @param array $fields The data to save. This is generally provided by
-     *                      getData()
-     *
-     * @return mixed entry ID on success or false on failure
-     *
+     * @param  array  $fields The data to save. This is generally provided by
+     *                        	getData()
+     * @return mixed          Entry ID on success or null on failure.
      * @throws ModelHasNotBeenModifiedException
      */
-    protected function update(array $fields)
+    protected function update(array $fields, array &$errors = null) : ?int
     {
         if (!$this->hasBeenModified()) {
             throw new Exceptions\ModelHasNotBeenModifiedException('The Entry has not been modified. Unable to save.');
@@ -540,7 +604,7 @@ abstract class AbstractClassMapper
         $entry->setDataFromPost($fields, $errors);
 
         $entry->commit();
-        $result = (count($errors) > 0 ? false : $entry->get('id'));
+        $result = (count($errors) > 0 ? null : $entry->get('id'));
 
         // Cleanup
         unset($entry);
@@ -712,7 +776,7 @@ abstract class AbstractClassMapper
     /**
      * Sets $hasBeenModified to true.
      */
-    public function flagAsModified()
+    public function flagAsModified() : void
     {
         $this->hasBeenModified = true;
     }
@@ -720,7 +784,7 @@ abstract class AbstractClassMapper
     /**
      * Sets $hasBeenModified to false.
      */
-    public function flagAsNotModified()
+    public function flagAsNotModified() : void
     {
         $this->hasBeenModified = false;
     }
@@ -730,7 +794,7 @@ abstract class AbstractClassMapper
      *
      * @return bool Returns the $hasBeenModified flag
      */
-    public function hasBeenModified()
+    public function hasBeenModified() : bool
     {
         return $this->hasBeenModified;
     }
@@ -740,7 +804,7 @@ abstract class AbstractClassMapper
      *
      * @return array Key/Value pairs of data stored in this object
      */
-    public function toArray()
+    public function toArray() : array
     {
         return $this->properties;
     }
@@ -755,7 +819,7 @@ abstract class AbstractClassMapper
      *
      * @return string the name of the method
      */
-    private function getCallingMethod($depth = 2)
+    private function getCallingMethod(int $depth = 2) : string
     {
         return debug_backtrace()[$depth]['function'];
     }
@@ -770,7 +834,7 @@ abstract class AbstractClassMapper
      *
      * @return string the name of the method
      */
-    private function getCallingClass($depth = 2)
+    private function getCallingClass(int $depth = 2) : string
     {
         return debug_backtrace()[$depth]['class'];
     }
@@ -785,10 +849,108 @@ abstract class AbstractClassMapper
      *
      * @return string the name of the method
      */
-    private function getCaller($depth = 2)
+    private function getCaller(int $depth = 2) : string
     {
         // Important: Add 1 more to the depth since this goes one level deeper
         // by calling getCallingClass() and getCallingMethod()
-        return sprintf('%s::%s', $this->getCallingClass($depth + 1), $this->getCallingMethod($depth + 1));
+        return sprintf(
+            "%s::%s",
+            $this->getCallingClass($depth + 1),
+            $this->getCallingMethod($depth + 1)
+        );
+    }
+
+    public function appendFilter(AbstractFilter $filter) : self
+    {
+        $this->filters[] = $filter;
+        return $this;
+    }
+
+    public function filter() : \Iterator
+    {
+        if (!($this->filteredResultIterator instanceof \Iterator)) {
+            $this->filteredResultIterator = static::fetch($this->filters);
+        }
+        $this->filteredResultIterator->rewind();
+        return $this->filteredResultIterator;
+    }
+
+    public static function fetch(array $filters) : SymphonyPDO\Lib\ResultIterator
+    {
+        static::findSectionFields();
+        $db = SymphonyPDO\Loader::instance();
+
+        for ($ii = 0; $ii < count($filters); $ii++) {
+            if (!($filters[$ii] instanceof AbstractFilter)) {
+                list($fieldName, $value, , ) = $filters[$ii];
+                $filters[$ii] = new Filter(
+                    $fieldName,
+                    $value,
+                    isset($filters[$ii][2]) ? $filters[$ii][2] : \PDO::PARAM_STR,
+                    isset($filters[$ii][3]) ? $filters[$ii][3] : Filter::OPERATOR_AND,
+                    isset($filters[$ii][4]) ? $filters[$ii][4] : Filter::COMPARISON_OPERATOR_EQ
+                );
+            }
+        }
+
+        $where = [];
+        $params = [];
+
+        foreach ($filters as $index => $f) {
+            if ($f instanceof NestedFilter) {
+                $where[] = (count($where) > 0 ? $f->operator() : "") . "  (";
+
+                $first = true;
+                foreach ($f->filters() as $ii => $ff) {
+                    $mapping = (object)static::findCustomFieldMapping($ff->field());
+                    $where[] = sprintf(
+                        $ff->pattern(!$first),
+                        $mapping->joinTableName,
+                        isset($mapping->databaseFieldName)
+                            ? $mapping->databaseFieldName
+                            : "value",
+                        "{$mapping->joinTableName}_{$index}_{$ii}"
+                    );
+
+                    if (!is_null($ff->value())) {
+                        $params["{$mapping->joinTableName}_{$index}_{$ii}"] = [
+                            'value' => $ff->value(),
+                            'type' => $ff->type()
+                        ];
+                    }
+
+                    $first = false;
+                }
+
+                $where[] = ")";
+            } else {
+                $mapping = (object)static::findCustomFieldMapping($f->field());
+                $where[] = sprintf(
+                    $f->pattern(count($where) > 0),
+                    $mapping->joinTableName,
+                    isset($mapping->databaseFieldName)
+                        ? $mapping->databaseFieldName
+                        : "value",
+                    "{$mapping->joinTableName}_{$index}"
+                );
+
+                if (!is_null($f->value())) {
+                    $params["{$mapping->joinTableName}_{$index}"] = [
+                        'value' => $f->value(),
+                        'type' => $f->type()
+                    ];
+                }
+            }
+        }
+
+        $where = implode(" ", $where);
+        $query = $db->prepare(static::fetchSQL($where));
+
+        foreach ($params as $name => &$p) {
+            $query->bindParam($name, $p['value'], $p['type']);
+        }
+
+        $query->execute();
+        return (new SymphonyPDO\Lib\ResultIterator(static::class, $query));
     }
 }
