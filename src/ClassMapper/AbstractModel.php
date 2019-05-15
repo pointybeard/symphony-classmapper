@@ -259,13 +259,13 @@ abstract class AbstractModel
             // ClassMapper currently doesn't support uploading files. Just send
             // along the file name so we don't trigger the Upload field to think
             // this is an upload attempt.
-            if (self::isFlagSet($flags, self::FLAG_FILE)) {
+            if (Flags\is_flag_set($flags, self::FLAG_FILE)) {
                 $data[$fieldHandle] = $data[$fieldHandle]['file'];
             }
 
             // The BOOL flag, which is ostensibliy a checkbox field, needs to
             // be converted into either 'Yes' or 'No'.
-            if (self::isFlagSet($flags, self::FLAG_BOOL)) {
+            if (Flags\is_flag_set($flags, self::FLAG_BOOL)) {
                 $func = function ($input) {
                     return (true === $input || 'yes' == strtolower($input))
                         ? 'Yes'
@@ -273,7 +273,7 @@ abstract class AbstractModel
                     ;
                 };
 
-                if (self::isFlagSet($flags, self::FLAG_ARRAY)) {
+                if (Flags\is_flag_set($flags, self::FLAG_ARRAY)) {
                     $data[$fieldHandle] = array_map($func, $this->$classMemberName);
                 } else {
                     $data[$fieldHandle] = $func($this->$classMemberName);
@@ -306,13 +306,13 @@ abstract class AbstractModel
             $joinTableName = static::$fieldMapping[$fieldHandle]['joinTableName'];
             $flags = static::$fieldMapping[$fieldHandle]['flags'];
 
-            if (self::isFlagSet($flags, self::FLAG_ARRAY)) {
+            if (Flags\is_flag_set($flags, self::FLAG_ARRAY)) {
                 // This field has been flagged as "multi" which means
                 // it contains data over several records. It needs to be handled
                 // differently. We do, however, need the field to show up
                 // to it triggers a call to __set() later on.
                 $sqlFields[] = "NULL as `{$classMemberName}`";
-            } elseif (self::isFlagSet($flags, self::FLAG_FILE)) {
+            } elseif (Flags\is_flag_set($flags, self::FLAG_FILE)) {
                 $sqlFields[] = "NULL as `{$classMemberName}`";
             } else {
                 $sqlFields[] = sprintf('`%s`.`%s` as `%s`', $joinTableName, $databaseFieldName, $classMemberName);
@@ -645,7 +645,7 @@ abstract class AbstractModel
                 // Files have extra, useful, fields like size and context
                 // specific metadata. We need to retain that information
                 // if the FLAG_FILE flag is set.
-                if (self::isFlagSet($flags, self::FLAG_FILE)) {
+                if (Flags\is_flag_set($flags, self::FLAG_FILE)) {
                     $databaseFieldName = $fieldMapping['databaseFieldName'];
                     $classMemberName = $fieldMapping['classMemberName'];
                     $joinTableName = $fieldMapping['joinTableName'];
@@ -667,7 +667,7 @@ abstract class AbstractModel
                 // link, tag, or mulit-select fields. This pulls out the data
                 // as a set and assigns it as an array rather than a
                 // basic string value.
-                if (self::isFlagSet($flags, self::FLAG_ARRAY)) {
+                if (Flags\is_flag_set($flags, self::FLAG_ARRAY)) {
                     $databaseFieldName = $fieldMapping['databaseFieldName'];
                     $classMemberName = $fieldMapping['classMemberName'];
                     $joinTableName = $fieldMapping['joinTableName'];
@@ -689,18 +689,18 @@ abstract class AbstractModel
                     // FLAG_ARRAY supports some of the type flags. Run through
                     // and see if any are set. Apply the type conversion to all
                     // items in the array.
-                    if (self::isFlagSet($flags, self::FLAG_BOOL)) {
+                    if (Flags\is_flag_set($flags, self::FLAG_BOOL)) {
                         $func = function ($input) {
                             return 'yes' == strtolower($value) || true === $value;
                         };
                         $value = array_map($func, $value);
-                    } elseif (self::isFlagSet($flags, self::FLAG_INT)) {
+                    } elseif (Flags\is_flag_set($flags, self::FLAG_INT)) {
                         $value = array_map('intval', $value);
-                    } elseif (self::isFlagSet($flags, self::FLAG_STR)) {
+                    } elseif (Flags\is_flag_set($flags, self::FLAG_STR)) {
                         $value = array_map('strval', $value);
-                    } elseif (self::isFlagSet($flags, self::FLAG_FLOAT)) {
+                    } elseif (Flags\is_flag_set($flags, self::FLAG_FLOAT)) {
                         $value = array_map('floatval', $value);
-                    } elseif (self::isFlagSet($flags, self::FLAG_CURRENCY)) {
+                    } elseif (Flags\is_flag_set($flags, self::FLAG_CURRENCY)) {
                         $func = function ($input) {
                             return (float) number_format((float) $value, 2, null, null);
                         };
@@ -712,22 +712,22 @@ abstract class AbstractModel
                 // doesn't make sense to combine these flags. e.g.
                 // FLAG_BOOL | FLAG_CURRENCY so just assume one is only ever
                 // set.
-                } elseif (self::isFlagSet($flags, self::FLAG_BOOL)) {
-                    $value = ('yes' == strtolower($value) || true === $value);
-                } elseif (self::isFlagSet($flags, self::FLAG_INT)) {
-                    $value = (int) $value;
-                } elseif (self::isFlagSet($flags, self::FLAG_STR)) {
-                    $value = (string) $value;
-                } elseif (self::isFlagSet($flags, self::FLAG_FLOAT)) {
-                    $value = (float) $value;
-                } elseif (self::isFlagSet($flags, self::FLAG_CURRENCY)) {
-                    $value = (float) number_format((float) $value, 2, null, null);
+                } elseif (Flags\is_flag_set($flags, self::FLAG_BOOL)) {
+                    $value = (strtolower($value) == 'yes' || $value === true);
+                } elseif (Flags\is_flag_set($flags, self::FLAG_INT)) {
+                    $value = (int)$value;
+                } elseif (Flags\is_flag_set($flags, self::FLAG_STR)) {
+                    $value = (string)$value;
+                } elseif (Flags\is_flag_set($flags, self::FLAG_FLOAT)) {
+                    $value = (float)$value;
+                } elseif (Flags\is_flag_set($flags, self::FLAG_CURRENCY)) {
+                    $value = (float)number_format((float)$value, 2, null, null);
                 }
 
                 // If the FLAG_NULL flag is set, we need to convert empty values
                 // i.e. int(0), string(""), (array)[], into a NULL. FLAG_ARRAY
                 // supports combining with FLAG_NULL.
-                if (self::isFlagSet($flags, self::FLAG_NULL)) {
+                if (Flags\is_flag_set($flags, self::FLAG_NULL)) {
                     if (is_array($value) && !empty($value)) {
                         $func = function ($input) {
                             return empty($input) ? null : $input;
