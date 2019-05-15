@@ -9,7 +9,7 @@ abstract class AbstractFilter implements Interfaces\FilterInterface
 
     public $operator;
 
-    public function __construct(int $operator=self::OPERATOR_AND)
+    public function __construct(string $operator=self::OPERATOR_AND)
     {
         $this->operator = $operator;
 
