@@ -18,7 +18,7 @@ class FilterFindInSet extends ClassMapper\Filter
         );
     }
 
-    public function __construct($field, array $values, $operator=self::OPERATOR_AND)
+    public function __construct($field, array $values, string $operator=self::OPERATOR_AND)
     {
         parent::__construct($field, implode(",", array_map("trim", $values)), \PDO::PARAM_STR, $operator);
     }

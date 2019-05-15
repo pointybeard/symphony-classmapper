@@ -11,7 +11,7 @@ class FilterIsNull extends ClassMapper\Filter
         return trim(($includeOperator == true ? $this->operator() : null) . ' %s.%s IS NULL');
     }
 
-    public function __construct(string $field, int $operator=self::OPERATOR_AND)
+    public function __construct(string $field, string $operator=self::OPERATOR_AND)
     {
         parent::__construct($field, null, \PDO::PARAM_STR, $operator);
     }

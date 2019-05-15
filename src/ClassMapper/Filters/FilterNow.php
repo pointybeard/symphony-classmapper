@@ -11,7 +11,7 @@ class FilterNow extends ClassMapper\Filter
         return trim(($includeOperator == true ? $this->operator() : null) . ' %s.%s ' . $this->comparisonOperator . ' NOW()');
     }
 
-    public function __construct(string $field, int $operator=self::OPERATOR_AND, int $comparisonOperator=self::COMPARISON_OPERATOR_EQ)
+    public function __construct(string $field, string $operator=self::OPERATOR_AND, string $comparisonOperator=self::COMPARISON_OPERATOR_EQ)
     {
         parent::__construct($field, null, \PDO::PARAM_STR, $operator, $comparisonOperator);
     }
