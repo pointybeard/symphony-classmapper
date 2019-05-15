@@ -48,9 +48,9 @@ abstract class AbstractSortableModel extends AbstractModel implements Interfaces
         $join = 'e';
         $column = 'id';
 
-        if(null == ($sortBy = self::findSortField())) {
-            $join = self::findJoinTableFieldName($field);
-            $column = self::findDatabaseFieldName($field);
+        if(null != ($sortBy = self::findSortField())) {
+            $join = self::findJoinTableFieldName($sortBy);
+            $column = self::findDatabaseFieldName($sortBy);
         }
 
         return sprintf(
