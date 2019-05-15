@@ -19,7 +19,7 @@ Symphony Class Mapper is installed via [Composer](http://getcomposer.org/). To i
 
 ## Usage
 
-To use the Class Mapper, simply extend `AbstractModel`, and use `Trait\hasClassMapperTrait`. E.g. assuming you have a section called 'articles' with a single field 'title':
+To use the Class Mapper, simply extend `AbstractModel`, and use `Trait\hasModelTrait`. E.g. assuming you have a section called 'articles' with a single field 'title':
 
 ```php
     <?php
@@ -30,11 +30,11 @@ To use the Class Mapper, simply extend `AbstractModel`, and use `Trait\hasClassM
 
     final class Article extends ClassMapper\AbstractModel
     {
-        use ClassMapper\Traits\hasClassMapperTrait;
+        use ClassMapper\Traits\hasModelTrait;
     }
 ```
 
-The trait `hasClassMapperTrait` provides three static member variables: `$sectionFields`, `$fieldMapping` and `$section`. They are used internally and hold a mapping to the Symphony section and the fields from that section. All are auto-populated by the parent object.
+The trait `hasModelTrait` provides three static member variables: `$sectionFields`, `$fieldMapping` and `$section`. They are used internally and hold a mapping to the Symphony section and the fields from that section. All are auto-populated by the parent object.
 
 The class mapper will attempt to deduce your section handle from your class name. It does this by assuming that your section is a pluralised version of the class name. In the above example, the class name of 'Article' is used to deduce that the corresponding section handle is `articles`. Should the class mapper not be able to locate a section, an exception will be thrown.
 
