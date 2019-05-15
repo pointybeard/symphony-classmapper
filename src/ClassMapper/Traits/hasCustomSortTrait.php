@@ -20,7 +20,7 @@ trait hasCustomSortTrait
         return null;
     }
 
-    private static function findSortDirection(string $sortByField=null) : int
+    private static function findSortDirection(string $sortByField=null) : string
     {
         if (is_null($sortByField)) {
             $sortByField = self::findSortField();
