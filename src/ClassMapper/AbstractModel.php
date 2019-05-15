@@ -17,23 +17,26 @@ use pointybeard\Helpers\Functions\Flags;
  */
 abstract class AbstractModel
 {
-    const FLAG_ARRAY = 0x0001;
-    const FLAG_BOOL = 0x0002;
-    const FLAG_FILE = 0x0004;
-    const FLAG_INT = 0x0008;
-    const FLAG_STR = 0x0010;
-    const FLAG_FLOAT = 0x0020;
-    const FLAG_CURRENCY = 0x0040;
-    const FLAG_NULL = 0x0080;
+    public const FLAG_ARRAY = 0x0001;
+    public const FLAG_BOOL = 0x0002;
+    public const FLAG_FILE = 0x0004;
+    public const FLAG_INT = 0x0008;
+    public const FLAG_STR = 0x0010;
+    public const FLAG_FLOAT = 0x0020;
+    public const FLAG_CURRENCY = 0x0040;
+    public const FLAG_NULL = 0x0080;
 
-    const FLAG_SORTBY = 0x0100;
-    const FLAG_SORTDESC = 0x200;
-    const FLAG_SORTASC = 0x0400;
+    public const FLAG_REQUIRED = 0x0800;
 
-    const FLAG_REQUIRED = 0x0800;
+    public const FLAG_ON_SAVE_VALIDATE = 0x1000;
+    public const FLAG_ON_SAVE_ENFORCE_MODIFIED = 0x2000;
 
-    const FLAG_ON_SAVE_VALIDATE = 0x1000;
-    const FLAG_ON_SAVE_ENFORCE_MODIFIED = 0x2000;
+    protected static $fetchSqlTemplate = "SELECT SQL_CALC_FOUND_ROWS e.id as `id`, %s
+        FROM `tbl_entries` AS `e` %s
+        WHERE e.section_id = %d AND %s
+        GROUP BY e.id
+        ORDER BY e.id ASC
+    ";
 
     /**
      * Holds the actual data for this model.
@@ -293,11 +296,6 @@ abstract class AbstractModel
     {
         static::findSectionFields();
 
-        $sql = 'SELECT SQL_CALC_FOUND_ROWS e.id as `id`, %s
-        FROM `tbl_entries` AS `e` %s
-        WHERE e.section_id = %d AND %s
-        GROUP BY e.id ORDER BY e.id ASC';
-
         $sqlFields = $sqlJoins = [];
 
         foreach (static::$sectionFields as $fieldHandle => $fieldId) {
@@ -310,7 +308,7 @@ abstract class AbstractModel
                 // This field has been flagged as "multi" which means
                 // it contains data over several records. It needs to be handled
                 // differently. We do, however, need the field to show up
-                // to it triggers a call to __set() later on.
+                // so it triggers a call to __set() later on.
                 $sqlFields[] = "NULL as `{$classMemberName}`";
             } elseif (Flags\is_flag_set($flags, self::FLAG_FILE)) {
                 $sqlFields[] = "NULL as `{$classMemberName}`";
@@ -321,8 +319,8 @@ abstract class AbstractModel
         }
 
         return sprintf(
-            $sql,
-            implode(','.PHP_EOL, $sqlFields),
+            static::$fetchSqlTemplate,
+            implode("," . PHP_EOL, $sqlFields),
             implode(PHP_EOL, $sqlJoins),
             self::getSectionId(),
             is_null($where) ? 1 : $where
@@ -391,6 +389,16 @@ abstract class AbstractModel
     protected static function findJoinTableFieldName(string $handle) : string
     {
         return static::$fieldMapping[$handle]['joinTableName'];
+    }
+
+    /**
+     * This method will return the database table column name for a given field.
+     * @param  string $handle Field handle
+     * @return string         The column name of the database table to use
+     */
+    protected static function findDatabaseFieldName(string $handle) : string
+    {
+        return static::$fieldMapping[$handle]['databaseFieldName'];
     }
 
     /**
@@ -701,13 +709,12 @@ abstract class AbstractModel
                     } elseif (Flags\is_flag_set($flags, self::FLAG_FLOAT)) {
                         $value = array_map('floatval', $value);
                     } elseif (Flags\is_flag_set($flags, self::FLAG_CURRENCY)) {
-                        $func = function ($input) {
-                            return (float) number_format((float) $value, 2, null, null);
-                        };
-                        $value = array_map($func, $value);
+                        $value = array_map(function ($input) {
+                            return (float)number_format((float)$input, 2, null, null);
+                        }, $value);
                     }
 
-                    // If FLAG_ARRAY isn't set, we still need to check for type
+                // If FLAG_ARRAY isn't set, we still need to check for type
                 // flags. Apply the type conversion to the value. Note, it
                 // doesn't make sense to combine these flags. e.g.
                 // FLAG_BOOL | FLAG_CURRENCY so just assume one is only ever
@@ -728,14 +735,13 @@ abstract class AbstractModel
                 // i.e. int(0), string(""), (array)[], into a NULL. FLAG_ARRAY
                 // supports combining with FLAG_NULL.
                 if (Flags\is_flag_set($flags, self::FLAG_NULL)) {
-                    if (is_array($value) && !empty($value)) {
-                        $func = function ($input) {
-                            return empty($input) ? null : $input;
-                        };
-                        $value = array_map($func, $value);
-                    } else {
-                        $value = empty($value) ? null : $value;
-                    }
+                    $funcEmptyToNull = function ($input) {
+                        return empty($input) ? null : $input;
+                    };
+                    $value = is_array($value) && !empty($value)
+                        ? array_map($funcEmptyToNull, $value)
+                        : $funcEmptyToNull($value)
+                    ;
                 }
             }
         }
