@@ -8,7 +8,7 @@ use pointybeard\Helpers\Functions\Flags;
 
 trait hasCustomSortTrait
 {
-    private static function findSortField() : array
+    private static function findSortField() : string
     {
         foreach (self::getCustomFieldMapping() as $field => $mapping) {
             if (isset($mapping['flags']) && Flags\is_flag_set($mapping['flags'], self::FLAG_SORTBY)) {
