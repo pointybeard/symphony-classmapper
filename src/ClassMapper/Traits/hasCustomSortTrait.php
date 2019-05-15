@@ -36,7 +36,7 @@ trait hasCustomSortTrait
         return $direction;
     }
 
-    private static function changeSortingMethod(string $sql, string $field, int $direction=self::FLAG_SORTASC) : string
+    private static function changeSortingMethod(string $sql, string $field, string $direction=self::SORT_DIRECTION_ASC) : string
     {
         return preg_replace(
             '@ORDER BY e.id ASC$@i',
