@@ -26,16 +26,16 @@ trait hasCustomSortTrait
         }
 
         $fieldMappings = self::getCustomFieldMapping();
-        $direction = self::SORT_ASC;
+        $direction = self::FLAG_SORTASC;
 
         if (isset($fieldMappings[$sortByField]['flags']) && Flags\is_flag_set($fieldMappings[$sortByField]['flags'], self::FLAG_SORTDESC)) {
-            $direction = self::SORT_DESC;
+            $direction = self::FLAG_SORTDESC;
         }
 
         return $direction;
     }
 
-    private static function changeSortingMethod(string $sql, string $field, int $direction=self::SORT_ASC) : string
+    private static function changeSortingMethod(string $sql, string $field, int $direction=self::FLAG_SORTASC) : string
     {
         return preg_replace(
             '@ORDER BY e.id ASC$@i',
