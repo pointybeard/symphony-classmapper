@@ -8,6 +8,7 @@ use pointybeard\Helpers\Functions\Flags;
 
 trait hasCustomSortTrait
 {
+
     private static function findSortField() : string
     {
         foreach (self::getCustomFieldMapping() as $field => $mapping) {
@@ -26,10 +27,10 @@ trait hasCustomSortTrait
         }
 
         $fieldMappings = self::getCustomFieldMapping();
-        $direction = self::FLAG_SORTASC;
+        $direction = self::SORT_DIRECTION_ASC;
 
         if (isset($fieldMappings[$sortByField]['flags']) && Flags\is_flag_set($fieldMappings[$sortByField]['flags'], self::FLAG_SORTDESC)) {
-            $direction = self::FLAG_SORTDESC;
+            $direction = self::SORT_DIRECTION_DESC;
         }
 
         return $direction;
