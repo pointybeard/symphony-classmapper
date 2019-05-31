@@ -1,14 +1,15 @@
 {
     "name": "pointybeard/symphony-classmapper",
+    "version": "1.0.4",
     "type": "library",
-    "description": "Maps sections into custom objects, simplifying the process of creating, modifying, deleting and fetching entries in Symphony.",
-    "keywords": ["symphony", "class mapper", "sections"],
+    "description": "Maps sections into custom objects, simplifying the process of creating, modifying, deleting and fetching entries in Symphony",
+    "keywords": ["symphony", "symphonycms", "class mapper", "sections"],
     "license": "MIT",
     "authors": [
         {
-            "name": "Alistair Kearney",
-            "email": "hi@alistairkearney.com",
-            "homepage": "http://alistairkearney.com",
+            "name": "Alannah Kearney",
+            "email": "hi@alannahkearney.com",
+            "homepage": "http://alannahkearney.com",
             "role": "Developer"
         }
     ],

@@ -1,17 +1,15 @@
-# Symphony Section Class Mapper
+# Symphony CMS: Section Class Mapper
 
-- Version: v1.0.1
-- Date: December 2nd 2018
+- Version: v1.0.4
+- Date: May 31 2019
 - [Release notes](https://github.com/pointybeard/symphony-classmapper/blob/master/CHANGELOG.md)
 - [GitHub repository](https://github.com/pointybeard/symphony-classmapper)
 
-[![Latest Stable Version](https://poser.pugx.org/pointybeard/symphony-classmapper/version)](https://packagist.org/packages/pointybeard/symphony-classmapper) [![License](https://poser.pugx.org/pointybeard/symphony-classmapper/license)](https://packagist.org/packages/pointybeard/symphony-classmapper)
-
-Maps sections into custom objects, simplifying the process of creating, modifying, deleting and fetching entries in Symphony.
+Maps sections into custom objects, simplifying the process of creating, modifying, deleting and fetching entries in [Symphony CMS](http://www.getsymphony.com/).
 
 ## Installation
 
-Symphony Class Mapper is installed via [Composer](http://getcomposer.org/). To install, use `composer require pointybeard/symphony-classmapper` or add `"pointybeard/symphony-classmapper": "~1.0"` to your `composer.json` file.
+Symphony Class Mapper is installed via [Composer](http://getcomposer.org/). To install, use `composer require pointybeard/symphony-classmapper` or add `"pointybeard/symphony-classmapper": "~1.0.0"` to your `composer.json` file.
 
 ## Usage
 
@@ -239,4 +237,4 @@ We encourage you to contribute to this project. Please check out the [Contributi
 
 ## License
 
-"Symphony Section Class Mapper" is released under the [MIT License](http://www.opensource.org/licenses/MIT).
+"Symphony CMS: Section Class Mapper" is released under the [MIT License](http://www.opensource.org/licenses/MIT).
