@@ -38,6 +38,38 @@ abstract class AbstractClassMapper
     protected $hasBeenModified = false;
 
     /**
+     * Connection to the Symphony database
+     * @var SymphonyPDO\Lib\Database
+     */
+    protected static $databaseConnection = null;
+
+    protected static function getDatabaseConnection() {
+        if(!(self::$databaseConnection instanceof SymphonyPDO\Lib\Database)) {
+            self::bindToDatabase(SymphonyPDO\Loader::instance());
+        }
+        return self::$databaseConnection;
+    }
+
+    /**
+     * Changed the internal database object
+     * @param  SymphonyPDO\Lib\Database $connection connection to database
+     * @return void
+     */
+    public static function bindToDatabase(SymphonyPDO\Lib\Database $connection) {
+        self::$databaseConnection = $connection;
+    }
+
+    /**
+     * Unbind the current database connection from AbstractClassMapper. If
+     * bindToDatabase() is not called again, getDatabaseConnection() will
+     * return the default Symphony database instance
+     * @return void
+     */
+    public static function unbindFromDatabase() {
+        self::$databaseConnection = null;
+    }
+
+    /**
      * Derives a properies name by turning the hythenated handle producted
      * by symphony into camelCase. e.g. some-field-handle => some-field-handle
      * @param string $handle Handle of the field to convert
@@ -116,8 +148,7 @@ abstract class AbstractClassMapper
             }
 
             // Check the database for a matching section
-            $db = SymphonyPDO\Loader::instance();
-            $query = $db->prepare(
+            $query = self::getDatabaseConnection()->prepare(
                 sprintf('SELECT SQL_CALC_FOUND_ROWS `id`, `handle` FROM `tbl_sections` WHERE `handle` IN ("%s")', implode('", "', $sectionHandles))
             );
 
@@ -251,11 +282,11 @@ abstract class AbstractClassMapper
      */
     public static function all()
     {
+        static::$sectionFields = [];
         self::findSectionFields();
-        $db = SymphonyPDO\Loader::instance();
-        $query = $db->prepare(static::fetchSQL());
-        $query->execute();
+        $query = self::getDatabaseConnection()->prepare(static::fetchSQL());
 
+        $query->execute();
         return (new SymphonyPDO\Lib\ResultIterator(get_called_class(), $query));
     }
 
@@ -268,8 +299,7 @@ abstract class AbstractClassMapper
     public static function loadFromId($entryId)
     {
         self::findSectionFields();
-        $db = SymphonyPDO\Loader::instance();
-        $query = $db->prepare(static::fetchSQL('e.id = :id').' LIMIT 1');
+        $query = self::getDatabaseConnection()->prepare(static::fetchSQL('e.id = :id').' LIMIT 1');
         $query->bindValue(':id', $entryId, \PDO::PARAM_INT);
         $query->execute();
 
@@ -350,14 +380,13 @@ abstract class AbstractClassMapper
      * @return array                         The array of field element name to
      *                                       id mapping
      */
-    protected static function findSectionFields($populateFieldMapping = true)
+    protected static function findSectionFields($populateFieldMapping = true, $force = false)
     {
-        if (isset(static::$sectionFields) && !empty(static::$sectionFields)) {
+        if (false == $force && isset(static::$sectionFields) && !empty(static::$sectionFields)) {
             return static::$sectionFields;
         }
 
-        $db = SymphonyPDO\Loader::instance();
-        $query = $db->prepare(
+        $query = self::getDatabaseConnection()->prepare(
             "SELECT `id`, `element_name` FROM `tbl_fields` WHERE `parent_section` = :sectionid"
         );
 
@@ -386,9 +415,11 @@ abstract class AbstractClassMapper
      */
     protected static function getSectionId()
     {
-        return SectionManager::fetchIDFromHandle(
-            static::getSectionHandleFromClassName()
-        );
+        return (int) self::getDatabaseConnection()->query(
+            sprintf("SELECT `id` FROM `tbl_sections` WHERE `handle` = '%s' LIMIT 1", static::getSectionHandleFromClassName()),
+            \PDO::FETCH_COLUMN,
+            0
+        )->fetch();
     }
 
     /**
@@ -522,8 +553,7 @@ abstract class AbstractClassMapper
                     $joinTableName = $fieldMapping['joinTableName'];
                     $fieldId = $fieldMapping['fieldId'];
 
-                    $db = SymphonyPDO\Loader::instance();
-                    $query = $db->prepare(sprintf(
+                    $query = self::getDatabaseConnection()->prepare(sprintf(
                         "SELECT %s.file, %1\$s.size, %1\$s.mimetype, %1\$s.meta
                         FROM `tbl_entries_data_%d` AS `%1\$s`
                         WHERE `%1\$s`.entry_id = :id LIMIT 1",
@@ -546,8 +576,7 @@ abstract class AbstractClassMapper
                     $joinTableName = $fieldMapping['joinTableName'];
                     $fieldId = $fieldMapping['fieldId'];
 
-                    $db = SymphonyPDO\Loader::instance();
-                    $query = $db->prepare(sprintf(
+                    $query = self::getDatabaseConnection()->prepare(sprintf(
                         "SELECT SQL_CALC_FOUND_ROWS `%s`.`%s` as `%s`
                         FROM `tbl_entries_data_%d` AS `%1\$s`
                         WHERE `%1\$s`.entry_id = :id AND `%1\$s`.`%2\$s` IS NOT NULL",
