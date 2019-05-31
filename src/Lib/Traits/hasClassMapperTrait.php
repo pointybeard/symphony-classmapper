@@ -3,7 +3,7 @@
 namespace Symphony\ClassMapper\Lib\Traits;
 
 /**
- * This trait contains the mandatory member variables used by AbstractClassMapper
+ * This trait contains the mandatory member variables used by AbstractClassMapper.
  */
 trait hasClassMapperTrait
 {
