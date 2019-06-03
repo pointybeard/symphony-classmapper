@@ -15,8 +15,12 @@
     ],
     "require": {
         "php": ">=7.2",
-        "pointybeard/symphony-pdo": "~0.1.0",
-        "pointybeard/helpers-functions-flags": "~1.0.0"
+        "pointybeard/helpers-functions-flags": "~1.0.0",
+        "pointybeard/helpers-foundation-factory": "~1.0.0",
+        "pointybeard/symphony-pdo": "~0.1.7"
+    },
+    "require-dev": {
+        "pointybeard/helpers-functions-debug": "~1.0.0"
     },
     "support": {
       "issues": "https://github.com/pointybeard/symphony-classmapper/issues",
