@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Symphony\ClassMapper\ClassMapper;
 
@@ -6,23 +8,24 @@ class NestedFilter extends AbstractFilter implements Interfaces\NestedFilterInte
 {
     private $filters = [];
 
-    public function __construct($operator=self::OPERATOR_AND)
+    public function __construct($operator = self::OPERATOR_AND)
     {
         parent::__construct($operator);
     }
 
-    public function add(Filter $filter) : self
+    public function add(Filter $filter): self
     {
         $this->filters[] = $filter;
+
         return $this;
     }
 
-    public function filters() : array
+    public function filters(): array
     {
         return $this->filters;
     }
 
-    public function toArray() : array
+    public function toArray(): array
     {
         $result = [];
 
@@ -33,23 +36,23 @@ class NestedFilter extends AbstractFilter implements Interfaces\NestedFilterInte
         return $result;
     }
 
-    public function pattern($includeOperator=true) : string
+    public function pattern($includeOperator = true): string
     {
-        $result = " (%s )";
-        $patterns = "";
+        $result = ' (%s )';
+        $patterns = '';
 
         $first = true;
         foreach ($this->filters as $f) {
-            $patterns .= " " . $f->pattern(!$first);
+            $patterns .= ' '.$f->pattern(!$first);
             $first = false;
         }
 
         return trim(
             (
-                $includeOperator == true
+                true == $includeOperator
                 ? $this->operator()
                 : null
-            ) . sprintf($result, $patterns)
+            ).sprintf($result, $patterns)
         );
     }
 }

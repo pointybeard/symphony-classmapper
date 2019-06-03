@@ -1,9 +1,11 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Symphony\ClassMapper\ClassMapper\Traits;
 
 /**
- * This trait contains the mandatory member variables used by AbstractModel
+ * This trait contains the mandatory member variables used by AbstractModel.
  */
 trait hasModelTrait
 {

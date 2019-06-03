@@ -1,19 +1,21 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Symphony\ClassMapper\ClassMapper;
 
 class Filter extends AbstractFilter
 {
-    const COMPARISON_OPERATOR_EQ = "=";
-    const COMPARISON_OPERATOR_NEQ = "<>";
-    const COMPARISON_OPERATOR_GT = ">";
-    const COMPARISON_OPERATOR_GTEQ = ">=";
-    const COMPARISON_OPERATOR_LT = "<";
-    const COMPARISON_OPERATOR_LTEQ = "<=";
-    const COMPARISON_OPERATOR_LIKE = "LIKE";
-    const COMPARISON_OPERATOR_NOT_LIKE = "NOT LIKE";
+    const COMPARISON_OPERATOR_EQ = '=';
+    const COMPARISON_OPERATOR_NEQ = '<>';
+    const COMPARISON_OPERATOR_GT = '>';
+    const COMPARISON_OPERATOR_GTEQ = '>=';
+    const COMPARISON_OPERATOR_LT = '<';
+    const COMPARISON_OPERATOR_LTEQ = '<=';
+    const COMPARISON_OPERATOR_LIKE = 'LIKE';
+    const COMPARISON_OPERATOR_NOT_LIKE = 'NOT LIKE';
 
-    public function __construct($field, $value, $type=\PDO::PARAM_STR, $operator=self::OPERATOR_AND, $comparisonOperator=self::COMPARISON_OPERATOR_EQ)
+    public function __construct($field, $value, $type = \PDO::PARAM_STR, $operator = self::OPERATOR_AND, $comparisonOperator = self::COMPARISON_OPERATOR_EQ)
     {
         parent::__construct($operator);
 
@@ -48,7 +50,7 @@ class Filter extends AbstractFilter
         }
     }
 
-    public function field() : string
+    public function field(): string
     {
         return $this->field;
     }
@@ -58,17 +60,17 @@ class Filter extends AbstractFilter
         return $this->value;
     }
 
-    public function type() : int
+    public function type(): int
     {
         return $this->type;
     }
 
-    public function comparisonOperator() : string
+    public function comparisonOperator(): string
     {
         return $this->comparisonOperator;
     }
 
-    public function toArray() : array
+    public function toArray(): array
     {
         return array_merge(parent::toArray(), [
             'field' => $this->field,
@@ -78,8 +80,8 @@ class Filter extends AbstractFilter
         ]);
     }
 
-    public function pattern($includeOperator=true) : string
+    public function pattern($includeOperator = true): string
     {
-        return trim(($includeOperator == true ? $this->operator() : null) . ' %s.%s ' . $this->comparisonOperator . ' :%s');
+        return trim((true == $includeOperator ? $this->operator() : null).' %s.%s '.$this->comparisonOperator.' :%s');
     }
 }

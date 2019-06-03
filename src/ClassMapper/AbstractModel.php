@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Symphony\ClassMapper\ClassMapper;
 
@@ -7,13 +9,11 @@ use EntryManager;
 use SectionManager;
 use XMLElement;
 use SymphonyPDO;
-
-use Symphony\ClassMapper\ClassMapper\Exceptions;
 use pointybeard\Helpers\Functions\Flags;
 
 /**
  * AbstractModel
- * Does all the heavy lifing for the Class Mapper library
+ * Does all the heavy lifing for the Class Mapper library.
  */
 abstract class AbstractModel
 {
@@ -31,12 +31,12 @@ abstract class AbstractModel
     public const FLAG_ON_SAVE_VALIDATE = 0x1000;
     public const FLAG_ON_SAVE_ENFORCE_MODIFIED = 0x2000;
 
-    protected static $fetchSqlTemplate = "SELECT SQL_CALC_FOUND_ROWS e.id as `id`, %s
+    protected static $fetchSqlTemplate = 'SELECT SQL_CALC_FOUND_ROWS e.id as `id`, %s
         FROM `tbl_entries` AS `e` %s
         WHERE e.section_id = %d AND %s
         GROUP BY e.id
         ORDER BY e.id ASC
-    ";
+    ';
 
     /**
      * Holds the actual data for this model.
@@ -58,7 +58,7 @@ abstract class AbstractModel
 
     // Currently this only checks for required fields, however, it could be
     // overloaded to check for other things.
-    public function validate() : bool
+    public function validate(): bool
     {
         foreach ($this->getData() as $field => $data) {
             $flags = static::$fieldMapping[$field]['flags'];
@@ -66,10 +66,11 @@ abstract class AbstractModel
                 throw new Exceptions\ModelValidationFailedException(
                     static::class,
                     $field,
-                    "Required field was not set."
+                    'Required field was not set.'
                 );
             }
         }
+
         return true;
     }
 
@@ -117,7 +118,7 @@ abstract class AbstractModel
      *
      * @return string camelCase member name
      */
-    protected static function handleToClassMemberName(string $handle) : string
+    protected static function handleToClassMemberName(string $handle): string
     {
         $bits = explode('-', $handle);
         $result = array_shift($bits);
@@ -129,34 +130,37 @@ abstract class AbstractModel
     }
 
     /**
-     * @param String $class Fully qualitied class name. Must be XMLElement or
+     * @param string $class Fully qualitied class name. Must be XMLElement or
      *                      extend \XMLElement
+     *
      * @return XMLElement instance of $class provided
      */
-    protected function createXMLContainer(string $class = "\XMLElement") : \XMLElement
+    protected function createXMLContainer(string $class = "\XMLElement"): \XMLElement
     {
         return new $class(
             (new \ReflectionClass(static::class))->getShortName(),
             null,
-            ["id" => $this->id]
+            ['id' => $this->id]
         );
     }
 
     /**
      * Generates an XMLElement (or object the extends XMLElement) object
      * representation of the data stored in the model.
+     *
      * @param \XMLElement $container Container that new elements will
      *                               be appended to. Must be instance
      *                               of \XMLElement or class that extends
      *                               \XMLElement, or NULL. If not container
      *                               is provided, createXMLContainer() will be
      *                               called.
+     *
      * @return \XMLElement The XML representation of this model
      */
-    public function toXml(\XMLElement $container = null) : \XMLElement
+    public function toXml(\XMLElement $container = null): \XMLElement
     {
         // Create the container object if none was provided
-        if (is_null($container)) {
+        if (null === $container) {
             $container = static::createXMLContainer();
         }
 
@@ -187,7 +191,7 @@ abstract class AbstractModel
      *               the input
      * @usedby getSectionHandleFromClassName()
      */
-    private static function pluralise(string $input) : array
+    private static function pluralise(string $input): array
     {
         return ["{$input}s", "{$input}es", substr($input, 0, -1).'ies'];
     }
@@ -200,10 +204,10 @@ abstract class AbstractModel
      * @throws SectionNotFoundException
      * @usedby getSectionId(), save()
      */
-    private static function getSectionHandleFromClassName() : string
+    private static function getSectionHandleFromClassName(): string
     {
         if (null === static::$section || empty(static::$section)) {
-            if (defined(static::class . "::SECTION")) {
+            if (defined(static::class.'::SECTION')) {
                 // The next part expects to get an array of possible section
                 // handles. Given the child class has a pre-defined
                 // section mapping, use that.
@@ -248,7 +252,7 @@ abstract class AbstractModel
      *
      * @return array key/value pairs
      */
-    protected function getData() : array
+    protected function getData(): array
     {
         $data = [];
 
@@ -288,11 +292,13 @@ abstract class AbstractModel
     }
 
     /**
-     * Builds out the SQL needed to fetch data for this object
-     * @param  string $where custom SQL WHERE clause to append
-     * @return string         the SQL to be executed
+     * Builds out the SQL needed to fetch data for this object.
+     *
+     * @param string $where custom SQL WHERE clause to append
+     *
+     * @return string the SQL to be executed
      */
-    protected static function fetchSQL(string $where=null) : string
+    protected static function fetchSQL(string $where = null): string
     {
         static::findSectionFields();
 
@@ -320,10 +326,10 @@ abstract class AbstractModel
 
         return sprintf(
             static::$fetchSqlTemplate,
-            implode("," . PHP_EOL, $sqlFields),
+            implode(','.PHP_EOL, $sqlFields),
             implode(PHP_EOL, $sqlJoins),
             self::getSectionId(),
-            is_null($where) ? 1 : $where
+            null === $where ? 1 : $where
         );
     }
 
@@ -333,13 +339,13 @@ abstract class AbstractModel
      * @return ResultIterator An iterator of all results found. Each item in The
      *                        iterator is of the model type.
      */
-    public static function all() : SymphonyPDO\Lib\ResultIterator
+    public static function all(): SymphonyPDO\Lib\ResultIterator
     {
         static::findSectionFields(true, true);
         $query = self::getDatabaseConnection()->prepare(static::fetchSQL());
         $query->execute();
 
-        return (new SymphonyPDO\Lib\ResultIterator(static::class, $query));
+        return new SymphonyPDO\Lib\ResultIterator(static::class, $query);
     }
 
     /**
@@ -350,7 +356,7 @@ abstract class AbstractModel
      * @return mixed Returns the first item found. The type is
      *               the same as The calling class.
      */
-    public static function loadFromId(int $entryId) : self
+    public static function loadFromId(int $entryId): self
     {
         self::findSectionFields();
         $query = self::getDatabaseConnection()->prepare(static::fetchSQL('e.id = :id').' LIMIT 1');
@@ -360,7 +366,7 @@ abstract class AbstractModel
         return (new SymphonyPDO\Lib\ResultIterator(static::class, $query))->current();
     }
 
-    public static function fetchFromIdList(array $ids) : SymphonyPDO\Lib\ResultIterator
+    public static function fetchFromIdList(array $ids): SymphonyPDO\Lib\ResultIterator
     {
         static::findSectionFields();
         $db = SymphonyPDO\Loader::instance();
@@ -369,12 +375,14 @@ abstract class AbstractModel
             implode(',', $ids)
         )));
         $query->execute();
-        return (new SymphonyPDO\Lib\ResultIterator(static::class, $query));
+
+        return new SymphonyPDO\Lib\ResultIterator(static::class, $query);
     }
 
-    public static function fetchSymphonyField(string $field) : \Field
+    public static function fetchSymphonyField(string $field): \Field
     {
         static::findSectionFields();
+
         return \FieldManager::fetch(static::$sectionFields[$field]);
     }
 
@@ -386,17 +394,19 @@ abstract class AbstractModel
      *
      * @return string The internal join table name
      */
-    protected static function findJoinTableFieldName(string $handle) : string
+    protected static function findJoinTableFieldName(string $handle): string
     {
         return static::$fieldMapping[$handle]['joinTableName'];
     }
 
     /**
      * This method will return the database table column name for a given field.
-     * @param  string $handle Field handle
-     * @return string         The column name of the database table to use
+     *
+     * @param string $handle Field handle
+     *
+     * @return string The column name of the database table to use
      */
-    protected static function findDatabaseFieldName(string $handle) : string
+    protected static function findDatabaseFieldName(string $handle): string
     {
         return static::$fieldMapping[$handle]['databaseFieldName'];
     }
@@ -407,7 +417,7 @@ abstract class AbstractModel
      * @return array The array of mappings
      * @usedby populateFieldMapping
      */
-    protected static function getCustomFieldMapping() : array
+    protected static function getCustomFieldMapping(): array
     {
         return [];
     }
@@ -417,7 +427,7 @@ abstract class AbstractModel
      *
      * @return array The array for that field mapping
      */
-    protected static function findCustomFieldMapping(string $classMemberName) : array
+    protected static function findCustomFieldMapping(string $classMemberName): array
     {
         foreach (static::$fieldMapping as $field) {
             if ($field['classMemberName'] == $classMemberName) {
@@ -431,7 +441,7 @@ abstract class AbstractModel
     /**
      * This method populates the $sectionFields arrays.
      */
-    private static function populateFieldMapping() : void
+    private static function populateFieldMapping(): void
     {
         // Look for any custom field mappings the model might be providing
         static::$fieldMapping = static::getCustomFieldMapping();
@@ -467,7 +477,7 @@ abstract class AbstractModel
      * @return array The array of field element name to
      *               id mapping
      */
-    protected static function findSectionFields(bool $populateFieldMapping = true, bool $force = false) : array
+    protected static function findSectionFields(bool $populateFieldMapping = true, bool $force = false): array
     {
         if (false == $force && isset(static::$sectionFields) && !empty(static::$sectionFields)) {
             return static::$sectionFields;
@@ -527,13 +537,13 @@ abstract class AbstractModel
      *
      * @return mixed Returns $this instance
      */
-    public function save(int $flags=self::FLAG_ON_SAVE_VALIDATE, string $sectionHandle=null) : self
+    public function save(int $flags = self::FLAG_ON_SAVE_VALIDATE, string $sectionHandle = null): self
     {
         if (Flags\is_flag_set($flags, self::FLAG_ON_SAVE_VALIDATE)) {
             static::validate();
         }
 
-        if (is_null($sectionHandle)) {
+        if (null === $sectionHandle) {
             $sectionHandle = static::getSectionHandleFromClassName();
         }
 
@@ -544,7 +554,6 @@ abstract class AbstractModel
             try {
                 $this->update($this->getData());
             } catch (Exceptions\ModelHasNotBeenModifiedException $ex) {
-
                 // If the enforce modified flag is set, rethrow the exception,
                 // otherwise ignore it.
                 if (Flags\is_flag_set($flags, self::FLAG_ON_SAVE_ENFORCE_MODIFIED)) {
@@ -562,13 +571,15 @@ abstract class AbstractModel
     }
 
     /**
-     * Uses Symphony's EntryManager to create a new entry
-     * @param  array  $fields  The data to save. This is generally provided by
-     *                         	getData()
-     * @param  string $section Handle of the section the the entry is saved to.
-     * @return mixed          Entry ID on success or null on failure.
+     * Uses Symphony's EntryManager to create a new entry.
+     *
+     * @param array  $fields  The data to save. This is generally provided by
+     *                        getData()
+     * @param string $section handle of the section the the entry is saved to
+     *
+     * @return mixed entry ID on success or null on failure
      */
-    protected function create(array $fields, string $section, array &$errors = null) : ?int
+    protected function create(array $fields, string $section, array &$errors = null): ?int
     {
         $errors = [];
         $entry = EntryManager::create();
@@ -588,12 +599,15 @@ abstract class AbstractModel
      * Uses Symphony's EntryManager to update a new entry. if there has not been
      * and modification (i.e. hasBeenModified() returns false), this method will
      * throw an exception.
-     * @param  array  $fields The data to save. This is generally provided by
-     *                        	getData()
-     * @return mixed          Entry ID on success or null on failure.
+     *
+     * @param array $fields The data to save. This is generally provided by
+     *                      getData()
+     *
+     * @return mixed entry ID on success or null on failure
+     *
      * @throws ModelHasNotBeenModifiedException
      */
-    protected function update(array $fields, array &$errors = null) : ?int
+    protected function update(array $fields, array &$errors = null): ?int
     {
         if (!$this->hasBeenModified()) {
             throw new Exceptions\ModelHasNotBeenModifiedException('The Entry has not been modified. Unable to save.');
@@ -710,25 +724,25 @@ abstract class AbstractModel
                         $value = array_map('floatval', $value);
                     } elseif (Flags\is_flag_set($flags, self::FLAG_CURRENCY)) {
                         $value = array_map(function ($input) {
-                            return (float)number_format((float)$input, 2, null, null);
+                            return (float) number_format((float) $input, 2, null, null);
                         }, $value);
                     }
 
-                // If FLAG_ARRAY isn't set, we still need to check for type
+                    // If FLAG_ARRAY isn't set, we still need to check for type
                 // flags. Apply the type conversion to the value. Note, it
                 // doesn't make sense to combine these flags. e.g.
                 // FLAG_BOOL | FLAG_CURRENCY so just assume one is only ever
                 // set.
                 } elseif (Flags\is_flag_set($flags, self::FLAG_BOOL)) {
-                    $value = (strtolower($value) == 'yes' || $value === true);
+                    $value = ('yes' == strtolower($value) || true === $value);
                 } elseif (Flags\is_flag_set($flags, self::FLAG_INT)) {
-                    $value = (int)$value;
+                    $value = (int) $value;
                 } elseif (Flags\is_flag_set($flags, self::FLAG_STR)) {
-                    $value = (string)$value;
+                    $value = (string) $value;
                 } elseif (Flags\is_flag_set($flags, self::FLAG_FLOAT)) {
-                    $value = (float)$value;
+                    $value = (float) $value;
                 } elseif (Flags\is_flag_set($flags, self::FLAG_CURRENCY)) {
-                    $value = (float)number_format((float)$value, 2, null, null);
+                    $value = (float) number_format((float) $value, 2, null, null);
                 }
 
                 // If the FLAG_NULL flag is set, we need to convert empty values
@@ -782,7 +796,7 @@ abstract class AbstractModel
     /**
      * Sets $hasBeenModified to true.
      */
-    public function flagAsModified() : void
+    public function flagAsModified(): void
     {
         $this->hasBeenModified = true;
     }
@@ -790,7 +804,7 @@ abstract class AbstractModel
     /**
      * Sets $hasBeenModified to false.
      */
-    public function flagAsNotModified() : void
+    public function flagAsNotModified(): void
     {
         $this->hasBeenModified = false;
     }
@@ -800,7 +814,7 @@ abstract class AbstractModel
      *
      * @return bool Returns the $hasBeenModified flag
      */
-    public function hasBeenModified() : bool
+    public function hasBeenModified(): bool
     {
         return $this->hasBeenModified;
     }
@@ -810,7 +824,7 @@ abstract class AbstractModel
      *
      * @return array Key/Value pairs of data stored in this object
      */
-    public function toArray() : array
+    public function toArray(): array
     {
         return $this->properties;
     }
@@ -825,7 +839,7 @@ abstract class AbstractModel
      *
      * @return string the name of the method
      */
-    private function getCallingMethod(int $depth = 2) : string
+    private function getCallingMethod(int $depth = 2): string
     {
         return debug_backtrace()[$depth]['function'];
     }
@@ -840,7 +854,7 @@ abstract class AbstractModel
      *
      * @return string the name of the method
      */
-    private function getCallingClass(int $depth = 2) : string
+    private function getCallingClass(int $depth = 2): string
     {
         return debug_backtrace()[$depth]['class'];
     }
@@ -855,40 +869,42 @@ abstract class AbstractModel
      *
      * @return string the name of the method
      */
-    private function getCaller(int $depth = 2) : string
+    private function getCaller(int $depth = 2): string
     {
         // Important: Add 1 more to the depth since this goes one level deeper
         // by calling getCallingClass() and getCallingMethod()
         return sprintf(
-            "%s::%s",
+            '%s::%s',
             $this->getCallingClass($depth + 1),
             $this->getCallingMethod($depth + 1)
         );
     }
 
-    public function appendFilter(AbstractFilter $filter) : self
+    public function appendFilter(AbstractFilter $filter): self
     {
         $this->filters[] = $filter;
+
         return $this;
     }
 
-    public function filter() : \Iterator
+    public function filter(): \Iterator
     {
         if (!($this->filteredResultIterator instanceof \Iterator)) {
             $this->filteredResultIterator = static::fetch($this->filters);
         }
         $this->filteredResultIterator->rewind();
+
         return $this->filteredResultIterator;
     }
 
-    public static function fetch(array $filters) : SymphonyPDO\Lib\ResultIterator
+    public static function fetch(array $filters): SymphonyPDO\Lib\ResultIterator
     {
         static::findSectionFields();
         $db = SymphonyPDO\Loader::instance();
 
-        for ($ii = 0; $ii < count($filters); $ii++) {
+        for ($ii = 0; $ii < count($filters); ++$ii) {
             if (!($filters[$ii] instanceof AbstractFilter)) {
-                list($fieldName, $value, , ) = $filters[$ii];
+                list($fieldName, $value) = $filters[$ii];
                 $filters[$ii] = new Filter(
                     $fieldName,
                     $value,
@@ -904,52 +920,52 @@ abstract class AbstractModel
 
         foreach ($filters as $index => $f) {
             if ($f instanceof NestedFilter) {
-                $where[] = (count($where) > 0 ? $f->operator() : "") . "  (";
+                $where[] = (count($where) > 0 ? $f->operator() : '').'  (';
 
                 $first = true;
                 foreach ($f->filters() as $ii => $ff) {
-                    $mapping = (object)static::findCustomFieldMapping($ff->field());
+                    $mapping = (object) static::findCustomFieldMapping($ff->field());
                     $where[] = sprintf(
                         $ff->pattern(!$first),
                         $mapping->joinTableName,
                         isset($mapping->databaseFieldName)
                             ? $mapping->databaseFieldName
-                            : "value",
+                            : 'value',
                         "{$mapping->joinTableName}_{$index}_{$ii}"
                     );
 
-                    if (!is_null($ff->value())) {
+                    if (null !== $ff->value()) {
                         $params["{$mapping->joinTableName}_{$index}_{$ii}"] = [
                             'value' => $ff->value(),
-                            'type' => $ff->type()
+                            'type' => $ff->type(),
                         ];
                     }
 
                     $first = false;
                 }
 
-                $where[] = ")";
+                $where[] = ')';
             } else {
-                $mapping = (object)static::findCustomFieldMapping($f->field());
+                $mapping = (object) static::findCustomFieldMapping($f->field());
                 $where[] = sprintf(
                     $f->pattern(count($where) > 0),
                     $mapping->joinTableName,
                     isset($mapping->databaseFieldName)
                         ? $mapping->databaseFieldName
-                        : "value",
+                        : 'value',
                     "{$mapping->joinTableName}_{$index}"
                 );
 
-                if (!is_null($f->value())) {
+                if (null !== $f->value()) {
                     $params["{$mapping->joinTableName}_{$index}"] = [
                         'value' => $f->value(),
-                        'type' => $f->type()
+                        'type' => $f->type(),
                     ];
                 }
             }
         }
 
-        $where = implode(" ", $where);
+        $where = implode(' ', $where);
         $query = $db->prepare(static::fetchSQL($where));
 
         foreach ($params as $name => &$p) {
@@ -957,6 +973,7 @@ abstract class AbstractModel
         }
 
         $query->execute();
-        return (new SymphonyPDO\Lib\ResultIterator(static::class, $query));
+
+        return new SymphonyPDO\Lib\ResultIterator(static::class, $query);
     }
 }

@@ -1,31 +1,33 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Symphony\ClassMapper\ClassMapper;
 
 abstract class AbstractFilter implements Interfaces\FilterInterface
 {
-    const OPERATOR_OR = "OR";
-    const OPERATOR_AND = "AND";
+    const OPERATOR_OR = 'OR';
+    const OPERATOR_AND = 'AND';
 
     public $operator;
 
-    public function __construct(string $operator=self::OPERATOR_AND)
+    public function __construct(string $operator = self::OPERATOR_AND)
     {
         $this->operator = $operator;
 
-        if ($this->operator != self::OPERATOR_AND && $this->operator != self::OPERATOR_OR) {
+        if (self::OPERATOR_AND != $this->operator && self::OPERATOR_OR != $this->operator) {
             throw new \Exception("Invalid filter operator '{$this->operator}' specified.");
         }
     }
 
-    public function toArray() : array
+    public function toArray(): array
     {
         return [
-            "operator" => $this->operator
+            'operator' => $this->operator,
         ];
     }
 
-    public function operator() : string
+    public function operator(): string
     {
         return $this->operator;
     }
