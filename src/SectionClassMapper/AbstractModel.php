@@ -15,22 +15,8 @@ use pointybeard\Helpers\Functions\Flags;
  * AbstractModel
  * Does all the heavy lifing for the Class Mapper library.
  */
-abstract class AbstractModel
+abstract class AbstractModel implements Interfaces\ModelInterface
 {
-    public const FLAG_ARRAY = 0x0001;
-    public const FLAG_BOOL = 0x0002;
-    public const FLAG_FILE = 0x0004;
-    public const FLAG_INT = 0x0008;
-    public const FLAG_STR = 0x0010;
-    public const FLAG_FLOAT = 0x0020;
-    public const FLAG_CURRENCY = 0x0040;
-    public const FLAG_NULL = 0x0080;
-
-    public const FLAG_REQUIRED = 0x0800;
-
-    public const FLAG_ON_SAVE_VALIDATE = 0x1000;
-    public const FLAG_ON_SAVE_ENFORCE_MODIFIED = 0x2000;
-
     protected static $fetchSqlTemplate = 'SELECT SQL_CALC_FOUND_ROWS e.id as `id`, %s
         FROM `tbl_entries` AS `e` %s
         WHERE e.section_id = %d AND %s
@@ -51,10 +37,6 @@ abstract class AbstractModel
      * @var bool
      */
     protected $hasBeenModified = false;
-
-    protected $filters = [];
-
-    protected $filteredResultIterator = null;
 
     // Currently this only checks for required fields, however, it could be
     // overloaded to check for other things.
@@ -81,7 +63,7 @@ abstract class AbstractModel
      */
     protected static $databaseConnection = null;
 
-    protected static function getDatabaseConnection()
+    final protected static function getDatabaseConnection()
     {
         if (!(self::$databaseConnection instanceof SymphonyPDO\Lib\Database)) {
             self::bindToDatabase(SymphonyPDO\Loader::instance());
@@ -95,7 +77,7 @@ abstract class AbstractModel
      *
      * @param SymphonyPDO\Lib\Database $connection connection to database
      */
-    public static function bindToDatabase(SymphonyPDO\Lib\Database $connection)
+    final public static function bindToDatabase(SymphonyPDO\Lib\Database $connection)
     {
         self::$databaseConnection = $connection;
     }
@@ -105,7 +87,7 @@ abstract class AbstractModel
      * bindToDatabase() is not called again, getDatabaseConnection() will
      * return the default Symphony database instance.
      */
-    public static function unbindFromDatabase()
+    final public static function unbindFromDatabase()
     {
         self::$databaseConnection = null;
     }
@@ -342,7 +324,10 @@ abstract class AbstractModel
     {
         static::findSectionFields(true, true);
 
-        return static::fetch();
+        $query = self::getDatabaseConnection()->prepare(static::fetchSQL());
+        $query->execute();
+
+        return new SymphonyPDO\Lib\ResultIterator(static::class, $query);
     }
 
     /**
@@ -645,7 +630,7 @@ abstract class AbstractModel
      */
     public function __get($name)
     {
-        return $this->properties[$name];
+        return $this->properties[$name] ?? null;
     }
 
     /**
@@ -784,7 +769,7 @@ abstract class AbstractModel
      *
      * @return mixed Returns $this instance for method chaining
      */
-    public function __call(string $name, array $args): mixed
+    public function __call(string $name, array $args)
     {
         if (empty($args)) {
             return $this->$name;
@@ -880,142 +865,5 @@ abstract class AbstractModel
             $this->getCallingClass($depth + 1),
             $this->getCallingMethod($depth + 1)
         );
-    }
-
-    /**
-     * Add a filter to this model. When filter() is called, these filters
-     * are used.
-     *
-     * @param AbstractFilter $filter
-     *
-     * @return self return self to support method chaining
-     */
-    public function appendFilter(AbstractFilter $filter): self
-    {
-        $this->filters[] = $filter;
-
-        return $this;
-    }
-
-    /**
-     * Removes all filters from this model instance.
-     */
-    public function clearFilters(): void
-    {
-        $this->filters = [];
-        $this->filteredResultIterator = null;
-    }
-
-    /**
-     * Calls fetch(), passing it any filters that have been added with
-     * appendFilter(). The result is cached in $this->filteredResultIterator
-     * and can be cleared by calling clearFilters().
-     *
-     * @return SymphonyPDO\Lib\ResultIterator The result from calling fetch()
-     */
-    public function filter(): SymphonyPDO\Lib\ResultIterator
-    {
-        if (!($this->filteredResultIterator instanceof \Iterator)) {
-            $this->filteredResultIterator = static::fetch($this->filters);
-        }
-        $this->filteredResultIterator->rewind();
-
-        return $this->filteredResultIterator;
-    }
-
-    /**
-     * Static method for fetching entries. Accepts an array of Filter objects
-     * which are used when constructing the SQL. Allows filtering of entries
-     * without the need to create an instance of the model first (as is
-     * necessary when calling filter()).
-     *
-     * @param array $filters an array of AbstractFilter objects
-     *
-     * @return SymphonyPDOLibResultIterator
-     */
-    public static function fetch(?array $filters = null): SymphonyPDO\Lib\ResultIterator
-    {
-        static::findSectionFields();
-
-        for ($ii = 0; $ii < count($filters); ++$ii) {
-            if (!($filters[$ii] instanceof AbstractFilter)) {
-                list($fieldName, $value) = $filters[$ii];
-                $filters[$ii] = new Filter(
-                    $fieldName,
-                    $value,
-                    isset($filters[$ii][2]) ? $filters[$ii][2] : \PDO::PARAM_STR,
-                    isset($filters[$ii][3]) ? $filters[$ii][3] : Filter::OPERATOR_AND,
-                    isset($filters[$ii][4]) ? $filters[$ii][4] : Filter::COMPARISON_OPERATOR_EQ
-                );
-            }
-        }
-
-        $where = null;
-        $params = [];
-
-        if (!empty($filters)) {
-            $where = [];
-
-            foreach ($filters as $index => $f) {
-                if ($f instanceof NestedFilter) {
-                    $where[] = (count($where) > 0 ? $f->operator() : '').'  (';
-
-                    $first = true;
-                    foreach ($f->filters() as $ii => $ff) {
-                        $mapping = (object) static::findCustomFieldMapping($ff->field());
-                        $where[] = sprintf(
-                            $ff->pattern(!$first),
-                            $mapping->joinTableName,
-                            isset($mapping->databaseFieldName)
-                                ? $mapping->databaseFieldName
-                                : 'value',
-                            "{$mapping->joinTableName}_{$index}_{$ii}"
-                        );
-
-                        if (null !== $ff->value()) {
-                            $params["{$mapping->joinTableName}_{$index}_{$ii}"] = [
-                                'value' => $ff->value(),
-                                'type' => $ff->type(),
-                            ];
-                        }
-
-                        $first = false;
-                    }
-
-                    $where[] = ')';
-                } else {
-                    $mapping = (object) static::findCustomFieldMapping($f->field());
-                    $where[] = sprintf(
-                        $f->pattern(count($where) > 0),
-                        $mapping->joinTableName,
-                        isset($mapping->databaseFieldName)
-                            ? $mapping->databaseFieldName
-                            : 'value',
-                        "{$mapping->joinTableName}_{$index}"
-                    );
-
-                    if (null !== $f->value()) {
-                        $params["{$mapping->joinTableName}_{$index}"] = [
-                            'value' => $f->value(),
-                            'type' => $f->type(),
-                        ];
-                    }
-                }
-            }
-
-            $where = implode(' ', $where);
-        }
-
-        // If there aren't any filters, $where will still be null
-        $query = self::getDatabaseConnection()->prepare(static::fetchSQL($where));
-
-        // If there aren't any filters, $params will be an empty array
-        foreach ($params as $name => &$p) {
-            $query->bindParam($name, $p['value'], $p['type']);
-        }
-
-        $query->execute();
-
-        return new SymphonyPDO\Lib\ResultIterator(static::class, $query);
     }
 }
