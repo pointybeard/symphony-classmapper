@@ -6,11 +6,11 @@ namespace Symphony\SectionClassMapper\SectionClassMapper\Filters;
 
 use Symphony\SectionClassMapper\SectionClassMapper;
 
-class FilterIsNull extends SectionClassMapper\Filter
+class IsNull extends SectionClassMapper\AbstractFilter
 {
-    public function pattern($includeOperator = true): string
+    protected function pattern(): string
     {
-        return trim((true == $includeOperator ? $this->operator() : null).' %s.%s IS NULL');
+        return '%s.%s IS NULL';
     }
 
     public function __construct(string $field, string $operator = self::OPERATOR_AND)
