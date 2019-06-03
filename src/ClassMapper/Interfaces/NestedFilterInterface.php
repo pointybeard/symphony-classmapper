@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Symphony\ClassMapper\ClassMapper\Interfaces;
+namespace Symphony\SectionClassMapper\SectionClassMapper\Interfaces;
 
-use Symphony\ClassMapper\ClassMapper;
+use Symphony\SectionClassMapper\SectionClassMapper;
 
 interface NestedFilterInterface
 {
-    public function add(ClassMapper\Filter $filter): ClassMapper\NestedFilter;
+    public function add(SectionClassMapper\Filter $filter): SectionClassMapper\NestedFilter;
 
     public function filters(): array;
 }

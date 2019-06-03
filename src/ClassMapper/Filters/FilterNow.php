@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Symphony\ClassMapper\ClassMapper\Filters;
+namespace Symphony\SectionClassMapper\SectionClassMapper\Filters;
 
-use Symphony\ClassMapper\ClassMapper;
+use Symphony\SectionClassMapper\SectionClassMapper;
 
-class FilterNow extends ClassMapper\Filter
+class FilterNow extends SectionClassMapper\Filter
 {
     public function pattern($includeOperator = true): string
     {

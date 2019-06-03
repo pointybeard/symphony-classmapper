@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symphony\ClassMapper\ClassMapper;
+namespace Symphony\SectionClassMapper\SectionClassMapper;
 
 abstract class AbstractFilter implements Interfaces\FilterInterface
 {

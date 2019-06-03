@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symphony\ClassMapper\ClassMapper\Filters;
+namespace Symphony\SectionClassMapper\SectionClassMapper\Filters;
 
 class FilterIsNotNull extends FilterIsNull
 {

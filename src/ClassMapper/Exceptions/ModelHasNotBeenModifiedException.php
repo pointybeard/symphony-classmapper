@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symphony\ClassMapper\ClassMapper\Exceptions;
+namespace Symphony\SectionClassMapper\SectionClassMapper\Exceptions;
 
 class ModelHasNotBeenModifiedException extends \Exception
 {

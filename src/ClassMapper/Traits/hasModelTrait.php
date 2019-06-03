@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symphony\ClassMapper\ClassMapper\Traits;
+namespace Symphony\SectionClassMapper\SectionClassMapper\Traits;
 
 /**
  * This trait contains the mandatory member variables used by AbstractModel.

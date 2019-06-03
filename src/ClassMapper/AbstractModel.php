@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symphony\ClassMapper\ClassMapper;
+namespace Symphony\SectionClassMapper\SectionClassMapper;
 
 use Symphony;
 use EntryManager;
@@ -91,7 +91,7 @@ abstract class AbstractModel
     }
 
     /**
-     * Changed the internal database object.
+     * Change the internal database object.
      *
      * @param SymphonyPDO\Lib\Database $connection connection to database
      */
@@ -101,7 +101,7 @@ abstract class AbstractModel
     }
 
     /**
-     * Unbind the current database connection from AbstractClassMapper. If
+     * Unbind the current database connection from AbstractModel. If
      * bindToDatabase() is not called again, getDatabaseConnection() will
      * return the default Symphony database instance.
      */
@@ -112,7 +112,7 @@ abstract class AbstractModel
 
     /**
      * Derives a properies name by turning the hythenated handle producted
-     * by symphony into camelCase. e.g. some-field-handle => some-field-handle.
+     * by symphony into camelCase. e.g. some-field-handle => someFieldHandle.
      *
      * @param string $handle Handle of the field to convert
      *
@@ -145,13 +145,13 @@ abstract class AbstractModel
     }
 
     /**
-     * Generates an XMLElement (or object the extends XMLElement) object
+     * Generates an XMLElement object (or object that extends XMLElement)
      * representation of the data stored in the model.
      *
      * @param \XMLElement $container Container that new elements will
      *                               be appended to. Must be instance
      *                               of \XMLElement or class that extends
-     *                               \XMLElement, or NULL. If not container
+     *                               \XMLElement, or NULL. If no container
      *                               is provided, createXMLContainer() will be
      *                               called.
      *
@@ -183,7 +183,7 @@ abstract class AbstractModel
     /**
      * Takes input and produces an array of possible pluralised versions
      * of that input. Note that this method is just a convienence and does not
-     * verify that the output are actually words.
+     * verify that the output are actually grammatically correct.
      *
      * @param string $input The input to pluralised
      *
@@ -210,10 +210,9 @@ abstract class AbstractModel
             if (defined(static::class.'::SECTION')) {
                 // The next part expects to get an array of possible section
                 // handles. Given the child class has a pre-defined
-                // section mapping, use that.
+                // section mapping, use that but wrap it up in an array.
                 $sectionHandles = [static::SECTION];
             } else {
-                // Let figure out the section handle
                 // Assume it is singular, and look for a pluralised section handles
                 $sectionHandles = self::pluralise(strtolower(
                     (new \ReflectionClass(static::class))->getShortName()
@@ -263,7 +262,7 @@ abstract class AbstractModel
             $flags = static::$fieldMapping[$fieldHandle]['flags'];
             $data[$fieldHandle] = $this->$classMemberName;
 
-            // ClassMapper currently doesn't support uploading files. Just send
+            // SectionClassMapper currently doesn't support uploading files. Just send
             // along the file name so we don't trigger the Upload field to think
             // this is an upload attempt.
             if (Flags\is_flag_set($flags, self::FLAG_FILE)) {
@@ -342,10 +341,8 @@ abstract class AbstractModel
     public static function all(): SymphonyPDO\Lib\ResultIterator
     {
         static::findSectionFields(true, true);
-        $query = self::getDatabaseConnection()->prepare(static::fetchSQL());
-        $query->execute();
 
-        return new SymphonyPDO\Lib\ResultIterator(static::class, $query);
+        return static::fetch();
     }
 
     /**
@@ -369,8 +366,13 @@ abstract class AbstractModel
     public static function fetchFromIdList(array $ids): SymphonyPDO\Lib\ResultIterator
     {
         static::findSectionFields();
-        $db = SymphonyPDO\Loader::instance();
-        $query = $db->prepare(static::fetchSQL(sprintf(
+        // Sanity check: Make sure all elements in $ids array are integers
+        array_walk($ids, function ($value, $key) {
+            if (!is_int($value)) {
+                throw new \Exception("value provided at array index {$key} is not an integer");
+            }
+        });
+        $query = self::getDatabaseConnection()->prepare(static::fetchSQL(sprintf(
             'e.id IN (%s)',
             implode(',', $ids)
         )));
@@ -772,9 +774,9 @@ abstract class AbstractModel
     }
 
     /**
-     * Magic method. Do not call explicitly. Alternative to the __get and __set
+     * Magic method. Alternative to the __get and __set
      * method. E.g. $this->firstName() is the same as $this->firstName.
-     * Similarly, $this->firstName = "bob" is the same as $this->firstName("bob").
+     * Similarly, $this->firstName = 'bob' is the same as $this->firstName('bob').
      *
      * @param string $name The name of the property to operate on
      * @param array  $args An index array with a single item. The contents of
@@ -782,7 +784,7 @@ abstract class AbstractModel
      *
      * @return mixed Returns $this instance for method chaining
      */
-    public function __call($name, $args)
+    public function __call(string $name, array $args): mixed
     {
         if (empty($args)) {
             return $this->$name;
@@ -880,6 +882,14 @@ abstract class AbstractModel
         );
     }
 
+    /**
+     * Add a filter to this model. When filter() is called, these filters
+     * are used.
+     *
+     * @param AbstractFilter $filter
+     *
+     * @return self return self to support method chaining
+     */
     public function appendFilter(AbstractFilter $filter): self
     {
         $this->filters[] = $filter;
@@ -887,7 +897,23 @@ abstract class AbstractModel
         return $this;
     }
 
-    public function filter(): \Iterator
+    /**
+     * Removes all filters from this model instance.
+     */
+    public function clearFilters(): void
+    {
+        $this->filters = [];
+        $this->filteredResultIterator = null;
+    }
+
+    /**
+     * Calls fetch(), passing it any filters that have been added with
+     * appendFilter(). The result is cached in $this->filteredResultIterator
+     * and can be cleared by calling clearFilters().
+     *
+     * @return SymphonyPDO\Lib\ResultIterator The result from calling fetch()
+     */
+    public function filter(): SymphonyPDO\Lib\ResultIterator
     {
         if (!($this->filteredResultIterator instanceof \Iterator)) {
             $this->filteredResultIterator = static::fetch($this->filters);
@@ -897,10 +923,19 @@ abstract class AbstractModel
         return $this->filteredResultIterator;
     }
 
-    public static function fetch(array $filters): SymphonyPDO\Lib\ResultIterator
+    /**
+     * Static method for fetching entries. Accepts an array of Filter objects
+     * which are used when constructing the SQL. Allows filtering of entries
+     * without the need to create an instance of the model first (as is
+     * necessary when calling filter()).
+     *
+     * @param array $filters an array of AbstractFilter objects
+     *
+     * @return SymphonyPDOLibResultIterator
+     */
+    public static function fetch(?array $filters = null): SymphonyPDO\Lib\ResultIterator
     {
         static::findSectionFields();
-        $db = SymphonyPDO\Loader::instance();
 
         for ($ii = 0; $ii < count($filters); ++$ii) {
             if (!($filters[$ii] instanceof AbstractFilter)) {
@@ -915,59 +950,66 @@ abstract class AbstractModel
             }
         }
 
-        $where = [];
+        $where = null;
         $params = [];
 
-        foreach ($filters as $index => $f) {
-            if ($f instanceof NestedFilter) {
-                $where[] = (count($where) > 0 ? $f->operator() : '').'  (';
+        if (!empty($filters)) {
+            $where = [];
 
-                $first = true;
-                foreach ($f->filters() as $ii => $ff) {
-                    $mapping = (object) static::findCustomFieldMapping($ff->field());
+            foreach ($filters as $index => $f) {
+                if ($f instanceof NestedFilter) {
+                    $where[] = (count($where) > 0 ? $f->operator() : '').'  (';
+
+                    $first = true;
+                    foreach ($f->filters() as $ii => $ff) {
+                        $mapping = (object) static::findCustomFieldMapping($ff->field());
+                        $where[] = sprintf(
+                            $ff->pattern(!$first),
+                            $mapping->joinTableName,
+                            isset($mapping->databaseFieldName)
+                                ? $mapping->databaseFieldName
+                                : 'value',
+                            "{$mapping->joinTableName}_{$index}_{$ii}"
+                        );
+
+                        if (null !== $ff->value()) {
+                            $params["{$mapping->joinTableName}_{$index}_{$ii}"] = [
+                                'value' => $ff->value(),
+                                'type' => $ff->type(),
+                            ];
+                        }
+
+                        $first = false;
+                    }
+
+                    $where[] = ')';
+                } else {
+                    $mapping = (object) static::findCustomFieldMapping($f->field());
                     $where[] = sprintf(
-                        $ff->pattern(!$first),
+                        $f->pattern(count($where) > 0),
                         $mapping->joinTableName,
                         isset($mapping->databaseFieldName)
                             ? $mapping->databaseFieldName
                             : 'value',
-                        "{$mapping->joinTableName}_{$index}_{$ii}"
+                        "{$mapping->joinTableName}_{$index}"
                     );
 
-                    if (null !== $ff->value()) {
-                        $params["{$mapping->joinTableName}_{$index}_{$ii}"] = [
-                            'value' => $ff->value(),
-                            'type' => $ff->type(),
+                    if (null !== $f->value()) {
+                        $params["{$mapping->joinTableName}_{$index}"] = [
+                            'value' => $f->value(),
+                            'type' => $f->type(),
                         ];
                     }
-
-                    $first = false;
-                }
-
-                $where[] = ')';
-            } else {
-                $mapping = (object) static::findCustomFieldMapping($f->field());
-                $where[] = sprintf(
-                    $f->pattern(count($where) > 0),
-                    $mapping->joinTableName,
-                    isset($mapping->databaseFieldName)
-                        ? $mapping->databaseFieldName
-                        : 'value',
-                    "{$mapping->joinTableName}_{$index}"
-                );
-
-                if (null !== $f->value()) {
-                    $params["{$mapping->joinTableName}_{$index}"] = [
-                        'value' => $f->value(),
-                        'type' => $f->type(),
-                    ];
                 }
             }
+
+            $where = implode(' ', $where);
         }
 
-        $where = implode(' ', $where);
-        $query = $db->prepare(static::fetchSQL($where));
+        // If there aren't any filters, $where will still be null
+        $query = self::getDatabaseConnection()->prepare(static::fetchSQL($where));
 
+        // If there aren't any filters, $params will be an empty array
         foreach ($params as $name => &$p) {
             $query->bindParam($name, $p['value'], $p['type']);
         }

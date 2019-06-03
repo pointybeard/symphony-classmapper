@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symphony\ClassMapper\ClassMapper\Interfaces;
+namespace Symphony\SectionClassMapper\SectionClassMapper\Interfaces;
 
 interface SortableModelInterface
 {
