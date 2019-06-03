@@ -6,9 +6,11 @@ namespace Symphony\SectionClassMapper\SectionClassMapper\Interfaces;
 
 interface FilterInterface
 {
-    public function operator(): string;
+    // Standard SQL operators
+    public const OPERATOR_OR = 'OR';
+    public const OPERATOR_AND = 'AND';
 
     public function toArray(): array;
 
-    public function pattern($includeOperator = true): string;
+    public function __toString(): string;
 }
