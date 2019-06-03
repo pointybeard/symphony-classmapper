@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper;
+namespace Symphony\SectionClassMapper\SectionClassMapper\Traits;
 
 use pointybeard\Helpers\Functions\Flags;
 
-abstract class AbstractSortableModel extends AbstractModel implements Interfaces\SortableModelInterface
+trait HasSortableModelTrait
 {
     protected static $fetchSqlTemplate = 'SELECT SQL_CALC_FOUND_ROWS e.id as `id`, %s
         FROM `tbl_entries` AS `e` %s
