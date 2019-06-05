@@ -205,7 +205,6 @@ abstract class AbstractModel implements Interfaces\ModelInterface
                     (new \ReflectionClass(static::class))->getShortName()
                 ));
             }
-            var_dump($sectionHandles);
             // Check the database for a matching section
             $query = self::getDatabaseConnection()->prepare(
                 sprintf('SELECT SQL_CALC_FOUND_ROWS `id`, `handle` FROM `tbl_sections` WHERE `handle` IN ("%s")', implode('", "', $sectionHandles))
