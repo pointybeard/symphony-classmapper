@@ -8,12 +8,12 @@ class NestedFilter extends AbstractFilter implements Interfaces\NestedFilterInte
 {
     private $filters = [];
 
-    public function __construct($operator = self::OPERATOR_AND)
+    public function __construct(string $operator = self::OPERATOR_AND)
     {
-        parent::__construct($operator);
+        parent::__construct('NESTED', null, \PDO::PARAM_STR, $operator);
     }
 
-    public function add(Filter $filter): self
+    public function add(AbstractFilter $filter): self
     {
         $this->filters[] = $filter;
 
@@ -36,23 +36,8 @@ class NestedFilter extends AbstractFilter implements Interfaces\NestedFilterInte
         return $result;
     }
 
-    public function pattern($includeOperator = true): string
+    protected function pattern(): string
     {
-        $result = ' (%s )';
-        $patterns = '';
-
-        $first = true;
-        foreach ($this->filters as $f) {
-            $patterns .= ' '.$f->pattern(!$first);
-            $first = false;
-        }
-
-        return trim(
-            (
-                true == $includeOperator
-                ? $this->operator()
-                : null
-            ).sprintf($result, $patterns)
-        );
+        return '(%s)';
     }
 }
