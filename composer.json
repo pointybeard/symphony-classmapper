@@ -30,6 +30,9 @@
     "autoload": {
         "psr-4": {
             "Symphony\\SectionClassMapper\\": "src/"
-        }
+        },
+        "files": [
+            "src/SectionClassMapper/Functions.php"
+        ]
     }
 }
