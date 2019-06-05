@@ -211,13 +211,13 @@ abstract class AbstractModel implements Interfaces\ModelInterface
             // Unable to find any matching section
             if ($query->rowCount() <= 0) {
                 throw new Exceptions\SectionNotFoundException(
-                    "Unable to find section from class name '".static::class."': no section could be located"
+                    "Unable to find section from class name '".static::class."': no section could be located. Tried: ".implode(', ', $sectionHandles)
                 );
 
             // Result was ambiguous. Pluraisation returned more than 1 matching section
             } elseif ($query->rowCount() > 1) {
                 throw new Exceptions\SectionNotFoundException(
-                    "Unable to find section from class name '".static::class."': ambiguous section name. Pluralisation returned more than 1 result."
+                    "Unable to find section from class name '".static::class."': ambiguous section name. Pluralisation returned more than 1 result. Tried: ".implode(', ', $sectionHandles)
                 );
             }
 
