@@ -8,12 +8,12 @@ use pointybeard\Helpers\Foundation\Factory;
 
 final class FilterFactory extends Factory\AbstractFactory
 {
-    public static function getTemplateNamespace(): string
+    public function getTemplateNamespace(): string
     {
         return __NAMESPACE__.'\\Filters\\%s';
     }
 
-    public static function getExpectedClassType(): ?string
+    public function getExpectedClassType(): ?string
     {
         return __NAMESPACE__.'\\AbstractFilter';
     }
