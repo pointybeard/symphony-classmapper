@@ -1,7 +1,6 @@
 {
     "name": "pointybeard/symphony-classmapper",
     "type": "library",
-    "version": "2.0.0",
     "description": "Maps sections into custom model classes, simplifying the process of creating, modifying, deleting and fetching entries in Symphony CMS.",
     "keywords": ["symphony", "class mapper", "sections", "library"],
     "license": "MIT",
