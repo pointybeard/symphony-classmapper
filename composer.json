@@ -28,7 +28,7 @@
     "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
-            "Symphony\\": "src/"
+            "pointybeard\\Symphony\\": "src/"
         },
         "files": [
             "src/Classmapper/Functions.php"
