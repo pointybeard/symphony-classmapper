@@ -178,6 +178,11 @@ abstract class AbstractModel implements Interfaces\ModelInterface
         return ["{$input}s", "{$input}es", substr($input, 0, -1).'ies'];
     }
 
+    public function getSectionHandle(): ?string
+    {
+        return null;
+    }
+
     /**
      * Determines the section handle.
      *
@@ -189,18 +194,18 @@ abstract class AbstractModel implements Interfaces\ModelInterface
     private static function getSectionHandleFromClassName(): string
     {
         if (null === static::$section || empty(static::$section)) {
-            if (defined(static::class.'::SECTION')) {
+            if (null !== static::getSectionHandle()) {
                 // The next part expects to get an array of possible section
                 // handles. Given the child class has a pre-defined
                 // section mapping, use that but wrap it up in an array.
-                $sectionHandles = [static::SECTION];
+                $sectionHandles = [static::getSectionHandle()];
             } else {
                 // Assume it is singular, and look for a pluralised section handles
                 $sectionHandles = self::pluralise(strtolower(
                     (new \ReflectionClass(static::class))->getShortName()
                 ));
             }
-
+            var_dump($sectionHandles);
             // Check the database for a matching section
             $query = self::getDatabaseConnection()->prepare(
                 sprintf('SELECT SQL_CALC_FOUND_ROWS `id`, `handle` FROM `tbl_sections` WHERE `handle` IN ("%s")', implode('", "', $sectionHandles))
