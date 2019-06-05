@@ -8,7 +8,7 @@ use Symphony\SectionClassMapper\SectionClassMapper;
 
 interface NestedFilterInterface
 {
-    public function add(SectionClassMapper\Filter $filter): SectionClassMapper\NestedFilter;
+    public function add(SectionClassMapper\AbstractFilter $filter): SectionClassMapper\NestedFilter;
 
     public function filters(): array;
 }
