@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper\Interfaces;
+namespace pointybeard\Symphony\Classmapper\Interfaces;
 
-use Symphony\SectionClassMapper\SectionClassMapper;
+use pointybeard\Symphony\Classmapper;
 use SymphonyPDO\Lib\ResultIterator;
 
 interface FilterableModelInterface
 {
-    public function appendFilter(SectionClassMapper\AbstractFilter $filter): SectionClassMapper\AbstractModel;
+    public function appendFilter(ClassmapperAbstractFilter $filter): Classmapper\AbstractModel;
 
     public function clearFilters(): void;
 

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper\Traits;
+namespace pointybeard\Symphony\Classmapper\Traits;
 
 use SymphonyPDO;
-use Symphony\SectionClassMapper\SectionClassMapper;
-use Symphony\SectionClassMapper\SectionClassMapper\Interfaces\FilterInterface;
+use pointybeard\Symphony\Classmapper;
+use pointybeard\Symphony\Classmapper\Interfaces\FilterInterface;
 
 trait HasFilterableModelTrait
 {
@@ -18,11 +18,11 @@ trait HasFilterableModelTrait
      * Add a filter to this model. When filter() is called, these filters
      * are used.
      *
-     * @param SectionClassMapper\AbstractFilter $filter
+     * @param Classmapper\AbstractFilter $filter
      *
      * @return self return self to support method chaining
      */
-    public function appendFilter(SectionClassMapper\AbstractFilter $filter): SectionClassMapper\AbstractModel
+    public function appendFilter(Classmapper\AbstractFilter $filter): Classmapper\AbstractModel
     {
         $this->filters[] = $filter;
 
@@ -70,7 +70,7 @@ trait HasFilterableModelTrait
      * without the need to create an instance of the model first (as is
      * necessary when calling filter()).
      *
-     * @param array $filters an array of SectionClassMapper\AbstractFilter objects
+     * @param array $filters an array of Classmapper\AbstractFilter objects
      *
      * @return SymphonyPDOLibResultIterator
      */
@@ -79,13 +79,13 @@ trait HasFilterableModelTrait
         static::findSectionFields();
 
         for ($ii = 0; $ii < count($filters); ++$ii) {
-            if (!($filters[$ii] instanceof SectionClassMapper\AbstractFilter)) {
+            if (!($filters[$ii] instanceof Classmapper\AbstractFilter)) {
                 list($fieldName, $value) = $filters[$ii];
-                $filters[$ii] = new SectionClassMapper\Filters\Basic(
+                $filters[$ii] = new Classmapper\Filters\Basic(
                     $fieldName,
                     $value,
                     isset($filters[$ii][2]) ? $filters[$ii][2] : \PDO::PARAM_STR,
-                    isset($filters[$ii][3]) ? $filters[$ii][3] : SectionClassMapper\Filters\Basic::COMPARISON_OPERATOR_EQ,
+                    isset($filters[$ii][3]) ? $filters[$ii][3] : Classmapper\Filters\Basic::COMPARISON_OPERATOR_EQ,
                     isset($filters[$ii][4]) ? $filters[$ii][4] : FilterInterface::OPERATOR_AND
                 );
             }
@@ -98,7 +98,7 @@ trait HasFilterableModelTrait
             $where = [];
 
             foreach ($filters as $index => $f) {
-                if ($f instanceof SectionClassMapper\NestedFilter) {
+                if ($f instanceof Classmapper\NestedFilter) {
                     $where[] = (count($where) > 0 ? $f->operator() : '').'  (';
 
                     $first = true;
@@ -107,7 +107,7 @@ trait HasFilterableModelTrait
                         $where[] = sprintf(
                             $ff->getPattern(
                                 true == $first
-                                    ? SectionClassMapper\AbstractFilter::FLAG_PATTERN_EXCLUDE_OPERATOR
+                                    ? Classmapper\AbstractFilter::FLAG_PATTERN_EXCLUDE_OPERATOR
                                     : null
                             ),
                             $mapping->joinTableName,
@@ -133,7 +133,7 @@ trait HasFilterableModelTrait
                     $where[] = sprintf(
                         $f->getPattern(
                             empty($where)
-                                ? SectionClassMapper\AbstractFilter::FLAG_PATTERN_EXCLUDE_OPERATOR
+                                ? Classmapper\AbstractFilter::FLAG_PATTERN_EXCLUDE_OPERATOR
                                 : null
                         ),
                         $mapping->joinTableName,

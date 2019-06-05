@@ -26,11 +26,11 @@ To use the Class Mapper, simply extend `AbstractModel`, and use `Trait\hasModelT
 
     namespace Your\Project\Namespace;
 
-    use Symphony\SectionClassMapper\SectionClassMapper;
+    use pointybeard\Symphony\Classmapper;
 
-    final class Article extends SectionClassMapper\AbstractModel
+    final class Article extends Classmapper\AbstractModel
     {
-        use SectionClassMapper\Traits\hasModelTrait;
+        use Classmapper\Traits\hasModelTrait;
     }
 ```
 

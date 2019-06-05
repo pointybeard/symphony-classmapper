@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper\Filters;
+namespace pointybeard\Symphony\Classmapper\Filters;
 
-use Symphony\SectionClassMapper\SectionClassMapper;
+use pointybeard\Symphony\Classmapper;
 
-class IsNull extends SectionClassMapper\AbstractFilter
+class IsNull extends Classmapper\AbstractFilter
 {
     protected function pattern(): string
     {

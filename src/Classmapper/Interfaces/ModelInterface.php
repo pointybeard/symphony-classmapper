@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper\Interfaces;
+namespace pointybeard\Symphony\Classmapper\Interfaces;
 
-use Symphony\SectionClassMapper\SectionClassMapper;
+use pointybeard\Symphony\Classmapper;
 use XMLElement;
 
 interface ModelInterface
@@ -29,7 +29,7 @@ interface ModelInterface
 
     public function delete();
 
-    public function save(int $flags = self::FLAG_ON_SAVE_VALIDATE, string $sectionHandle = null): SectionClassMapper\AbstractModel;
+    public function save(int $flags = self::FLAG_ON_SAVE_VALIDATE, string $sectionHandle = null): Classmapper\AbstractModel;
 
     public function flagAsModified(): void;
 

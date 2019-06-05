@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper;
+namespace pointybeard\Symphony\Classmapper;
 
 use Symphony;
 use EntryManager;
@@ -244,7 +244,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
             $flags = static::$fieldMapping[$fieldHandle]['flags'];
             $data[$fieldHandle] = $this->$classMemberName;
 
-            // SectionClassMapper currently doesn't support uploading files. Just send
+            // Classmapper currently doesn't support uploading files. Just send
             // along the file name so we don't trigger the Upload field to think
             // this is an upload attempt.
             if (Flags\is_flag_set($flags, self::FLAG_FILE)) {

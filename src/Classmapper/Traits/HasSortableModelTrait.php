@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper\Traits;
+namespace pointybeard\Symphony\Classmapper\Traits;
 
 use pointybeard\Helpers\Functions\Flags;
 

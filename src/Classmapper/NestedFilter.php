@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper;
+namespace pointybeard\Symphony\Classmapper;
 
 class NestedFilter extends AbstractFilter implements Interfaces\NestedFilterInterface
 {

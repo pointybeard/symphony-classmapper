@@ -29,10 +29,10 @@
     "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
-            "Symphony\\SectionClassMapper\\": "src/"
+            "Symphony\\": "src/"
         },
         "files": [
-            "src/SectionClassMapper/Functions.php"
+            "src/Classmapper/Functions.php"
         ]
     }
 }

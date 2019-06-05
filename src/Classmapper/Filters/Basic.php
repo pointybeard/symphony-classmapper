@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper\Filters;
+namespace pointybeard\Symphony\Classmapper\Filters;
 
-use Symphony\SectionClassMapper\SectionClassMapper;
+use pointybeard\Symphony\Classmapper;
 
-class Basic extends SectionClassMapper\AbstractFilter
+class Basic extends Classmapper\AbstractFilter
 {
     public const COMPARISON_OPERATOR_EQ = '=';
     public const COMPARISON_OPERATOR_NEQ = '<>';

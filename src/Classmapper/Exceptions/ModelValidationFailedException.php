@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper\Exceptions;
+namespace pointybeard\Symphony\Classmapper\Exceptions;
 
 final class ModelValidationFailedException extends \Exception
 {

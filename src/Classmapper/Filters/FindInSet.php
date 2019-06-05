@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper\Filters;
+namespace pointybeard\Symphony\Classmapper\Filters;
 
-use Symphony\SectionClassMapper\SectionClassMapper;
+use pointybeard\Symphony\Classmapper;
 
-class FindInSet extends SectionClassMapper\AbstractFilter
+class FindInSet extends Classmapper\AbstractFilter
 {
     public function __construct($field, array $values, string $operator = self::OPERATOR_AND)
     {

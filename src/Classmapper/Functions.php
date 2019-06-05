@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper;
+namespace pointybeard\Symphony\Classmapper;
 
 function create(string $alias, string $sectionHandle): string
 {
@@ -22,7 +22,7 @@ function create(string $alias, string $sectionHandle): string
         return $classname;
     };
 
-    $namespace = '\\Symphony\\SectionClassMapper\\SectionClassMapper';
+    $namespace = '\\Symphony\\Classmapper';
     $wrapperShortName = $randomClassName('modelCreationWrapper', $namespace);
     $wrapper = "{$namespace}\\{$wrapperShortName}";
 

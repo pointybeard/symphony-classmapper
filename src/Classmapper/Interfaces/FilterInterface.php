@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symphony\SectionClassMapper\SectionClassMapper\Interfaces;
+namespace pointybeard\Symphony\Classmapper\Interfaces;
 
 interface FilterInterface
 {
