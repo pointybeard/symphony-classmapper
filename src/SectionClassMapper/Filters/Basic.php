@@ -25,9 +25,9 @@ class Basic extends SectionClassMapper\AbstractFilter
         return '%s.%s '.$this->comparisonOperator().' :%s';
     }
 
-    public function __construct(string $field, $value, string $comparisonOperator = self::COMPARISON_OPERATOR_EQ, string $operator = self::OPERATOR_AND)
+    public function __construct(string $field, $value, int $type = \PDO::PARAM_STR, string $comparisonOperator = self::COMPARISON_OPERATOR_EQ, string $operator = self::OPERATOR_AND)
     {
         $this->comparisonOperator($comparisonOperator);
-        parent::__construct($field, $value, \PDO::PARAM_STR, $operator);
+        parent::__construct($field, $value, $type, $operator);
     }
 }
