@@ -6,6 +6,7 @@ namespace Symphony\SectionClassMapper\SectionClassMapper\Traits;
 
 use SymphonyPDO;
 use Symphony\SectionClassMapper\SectionClassMapper;
+use Symphony\SectionClassMapper\SectionClassMapper\Interfaces\FilterInterface;
 
 trait HasFilterableModelTrait
 {
@@ -21,7 +22,7 @@ trait HasFilterableModelTrait
      *
      * @return self return self to support method chaining
      */
-    public function appendFilter(SectionClassMapper\AbstractFilter $filter): self
+    public function appendFilter(SectionClassMapper\AbstractFilter $filter): SectionClassMapper\AbstractModel
     {
         $this->filters[] = $filter;
 
@@ -80,12 +81,12 @@ trait HasFilterableModelTrait
         for ($ii = 0; $ii < count($filters); ++$ii) {
             if (!($filters[$ii] instanceof SectionClassMapper\AbstractFilter)) {
                 list($fieldName, $value) = $filters[$ii];
-                $filters[$ii] = new Filter(
+                $filters[$ii] = new SectionClassMapper\Filters\Basic(
                     $fieldName,
                     $value,
                     isset($filters[$ii][2]) ? $filters[$ii][2] : \PDO::PARAM_STR,
-                    isset($filters[$ii][3]) ? $filters[$ii][3] : SectionClassMapper\Filter::OPERATOR_AND,
-                    isset($filters[$ii][4]) ? $filters[$ii][4] : SectionClassMapper\Filter::COMPARISON_OPERATOR_EQ
+                    isset($filters[$ii][3]) ? $filters[$ii][3] : SectionClassMapper\Filters\Basic::COMPARISON_OPERATOR_EQ,
+                    isset($filters[$ii][4]) ? $filters[$ii][4] : FilterInterface::OPERATOR_AND
                 );
             }
         }
@@ -104,7 +105,11 @@ trait HasFilterableModelTrait
                     foreach ($f->filters() as $ii => $ff) {
                         $mapping = (object) static::findCustomFieldMapping($ff->field());
                         $where[] = sprintf(
-                            $ff->pattern(!$first),
+                            $ff->getPattern(
+                                true == $first
+                                    ? SectionClassMapper\AbstractFilter::FLAG_PATTERN_EXCLUDE_OPERATOR
+                                    : null
+                            ),
                             $mapping->joinTableName,
                             isset($mapping->databaseFieldName)
                                 ? $mapping->databaseFieldName
@@ -126,7 +131,7 @@ trait HasFilterableModelTrait
                 } else {
                     $mapping = (object) static::findCustomFieldMapping($f->field());
                     $where[] = sprintf(
-                        $f->pattern(
+                        $f->getPattern(
                             empty($where)
                                 ? SectionClassMapper\AbstractFilter::FLAG_PATTERN_EXCLUDE_OPERATOR
                                 : null
