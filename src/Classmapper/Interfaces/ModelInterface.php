@@ -38,4 +38,6 @@ interface ModelInterface
     public function hasBeenModified(): bool;
 
     public function toArray(): array;
+
+    public function getSectionHandle(): ?string;
 }
