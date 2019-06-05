@@ -9,7 +9,7 @@ use SymphonyPDO\Lib\ResultIterator;
 
 interface FilterableModelInterface
 {
-    public function appendFilter(ClassmapperAbstractFilter $filter): Classmapper\AbstractModel;
+    public function appendFilter(Classmapper\AbstractFilter $filter): Classmapper\AbstractModel;
 
     public function clearFilters(): void;
 
