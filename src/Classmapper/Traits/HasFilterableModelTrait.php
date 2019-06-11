@@ -57,7 +57,7 @@ trait HasFilterableModelTrait
     public function filter(): SymphonyPDO\Lib\ResultIterator
     {
         if (!($this->filteredResultIterator instanceof SymphonyPDO\Lib\ResultIterator)) {
-            $this->filteredResultIterator = self::fetch($this->filters);
+            $this->filteredResultIterator = self::fetch(...$this->filters);
         }
         $this->filteredResultIterator->rewind();
 
@@ -74,22 +74,9 @@ trait HasFilterableModelTrait
      *
      * @return SymphonyPDOLibResultIterator
      */
-    final public static function fetch(?array $filters = null): SymphonyPDO\Lib\ResultIterator
+    final public static function fetch(?Classmapper\AbstractFilter ...$filters): SymphonyPDO\Lib\ResultIterator
     {
         static::findSectionFields();
-
-        for ($ii = 0; $ii < count($filters); ++$ii) {
-            if (!($filters[$ii] instanceof Classmapper\AbstractFilter)) {
-                list($fieldName, $value) = $filters[$ii];
-                $filters[$ii] = new Classmapper\Filters\Basic(
-                    $fieldName,
-                    $value,
-                    isset($filters[$ii][2]) ? $filters[$ii][2] : \PDO::PARAM_STR,
-                    isset($filters[$ii][3]) ? $filters[$ii][3] : Classmapper\Filters\Basic::COMPARISON_OPERATOR_EQ,
-                    isset($filters[$ii][4]) ? $filters[$ii][4] : FilterInterface::OPERATOR_AND
-                );
-            }
-        }
 
         $where = null;
         $params = [];
