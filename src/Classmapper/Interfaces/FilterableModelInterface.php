@@ -17,5 +17,5 @@ interface FilterableModelInterface
 
     public function filter(): ResultIterator;
 
-    public static function fetch(?array $filters = null): ResultIterator;
+    public static function fetch(?Classmapper\AbstractFilter ...$filters): SymphonyPDO\Lib\ResultIterator;
 }
