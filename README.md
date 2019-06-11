@@ -1,7 +1,7 @@
 # Symphony CMS: Section Class Mapper
 
 - Version: 2.0.0
-- Date: June 10 2019
+- Date: June 11 2019
 - [Release notes](https://github.com/pointybeard/symphony-classmapper/blob/master/CHANGELOG.md)
 - [GitHub repository](https://github.com/pointybeard/symphony-classmapper)
 
@@ -225,6 +225,17 @@ Converts empty values, i.e. int(0), string(""), (array)[] etc, into `NULL`. Can 
 #### Sorting
 
 Sorting flags are used when retrieving data. The Class Mapper will look for these flags when building the SQL used to pull put data from the database.
+
+To enable sorting for your model, be sure to implement `SortableModelInterface` and also use the `Traits\HasSortableModelTrait` trait. E.g.
+
+```php
+use pointybeard\Symphony\Classmapper;
+
+class Articles extends Classmapper\AbstractModel implements Classmapper\Interfaces\SortableModelInterface {
+    use Classmapper\Traits\HasSortableModelTrait;
+    ...
+}
+```
 
 *FLAG\_SORTBY*
 
