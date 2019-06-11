@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace pointybeard\Symphony\Classmapper\Interfaces;
 
 use pointybeard\Symphony\Classmapper;
-use SymphonyPDO\Lib\ResultIterator;
 
 interface FilterableModelInterface
 {
@@ -17,5 +16,5 @@ interface FilterableModelInterface
 
     public function filter(): ResultIterator;
 
-    public static function fetch(?Classmapper\AbstractFilter ...$filters): SymphonyPDO\Lib\ResultIterator;
+    public static function fetch(?Classmapper\AbstractFilter ...$filters): \SymphonyPDO\Lib\ResultIterator;
 }
