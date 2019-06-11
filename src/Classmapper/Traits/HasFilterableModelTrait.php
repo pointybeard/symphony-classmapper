@@ -6,7 +6,6 @@ namespace pointybeard\Symphony\Classmapper\Traits;
 
 use SymphonyPDO;
 use pointybeard\Symphony\Classmapper;
-use pointybeard\Symphony\Classmapper\Interfaces\FilterInterface;
 
 trait HasFilterableModelTrait
 {
