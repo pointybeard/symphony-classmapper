@@ -49,7 +49,7 @@ abstract class AbstractFilter implements Interfaces\FilterInterface
     private function __operator(string $operator): void
     {
         if (Interfaces\FilterInterface::OPERATOR_AND != $operator && Interfaces\FilterInterface::OPERATOR_OR != $operator) {
-            throw new \Exception("Invalid filter operator '{$operator}' specified.");
+            throw new Exceptions\ClassmapperException("Invalid filter operator '{$operator}' specified.");
         }
         $this->operator = $operator;
     }
@@ -57,7 +57,7 @@ abstract class AbstractFilter implements Interfaces\FilterInterface
     private function __type(int $type): void
     {
         if (!Flags\is_flag_set(PDO::PARAM_BOOL | PDO::PARAM_NULL | PDO::PARAM_INT | PDO::PARAM_STR | PDO::PARAM_LOB | PDO::PARAM_STMT | PDO::PARAM_INPUT_OUTPUT, $type)) {
-            throw new \Exception('Invalid filter value type specified. Acceptable types are: PDO::PARAM_BOOL, PDO::PARAM_NULL, PDO::PARAM_INT, PDO::PARAM_STR, PDO::PARAM_LOB, PDO::PARAM_STMT, and PDO::PARAM_INPUT_OUTPUT');
+            throw new Exceptions\ClassmapperException('Invalid filter value type specified. Acceptable types are: PDO::PARAM_BOOL, PDO::PARAM_NULL, PDO::PARAM_INT, PDO::PARAM_STR, PDO::PARAM_LOB, PDO::PARAM_STMT, and PDO::PARAM_INPUT_OUTPUT');
         }
         $this->type = $type;
     }

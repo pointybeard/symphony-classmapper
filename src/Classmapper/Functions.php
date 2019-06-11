@@ -11,7 +11,7 @@ if (!function_exists(__NAMESPACE__.'\create')) {
     function create(string $alias, string $sectionHandle): string
     {
         if (class_exists($alias)) {
-            throw new \Exception(sprintf('Unable to create model. Returned: Class %s already exists in global scope', $alias));
+            throw new Exceptions\ClassmapperException(sprintf('Unable to create model. Class %s already exists in global scope', $alias));
         }
 
         $namespace = __NAMESPACE__;

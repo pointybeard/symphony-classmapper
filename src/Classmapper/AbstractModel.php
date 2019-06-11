@@ -358,7 +358,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
         // Sanity check: Make sure all elements in $ids array are integers
         array_walk($ids, function ($value, $key) {
             if (!is_int($value)) {
-                throw new \Exception("value provided at array index {$key} is not an integer");
+                throw new Exceptions\ClassmapperException("value provided at array index {$key} is not an integer");
             }
         });
         $query = self::getDatabaseConnection()->prepare(static::fetchSQL(sprintf(
@@ -479,7 +479,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
         );
 
         if (false == $query->execute([':sectionid' => self::getSectionId()])) {
-            throw new \Exception('No fields found for section with id `'.self::getSectionId().'` !');
+            throw new Exceptions\ClassmapperException('No fields found for section with id `'.self::getSectionId().'` !');
         }
 
         $fields = [];
@@ -528,7 +528,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
      *
      * @return mixed Returns $this instance
      */
-    public function save(int $flags = self::FLAG_ON_SAVE_VALIDATE, string $sectionHandle = null): self
+    public function save(?int $flags = self::FLAG_ON_SAVE_VALIDATE, string $sectionHandle = null): self
     {
         if (Flags\is_flag_set($flags, self::FLAG_ON_SAVE_VALIDATE)) {
             static::validate();
