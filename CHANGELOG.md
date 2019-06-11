@@ -3,8 +3,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [2.0.0] - 2019-05-14
-@TODO
+## [2.0.0] - 2019-06-11
+- Major rewrite of code base
+- Added filtering an sorting
+- Added ability to create models on the fly using `Classmapper\create()`
 
 ## [1.0.4][] - 2019-01-03
 #### Added
