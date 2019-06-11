@@ -29,7 +29,7 @@ interface ModelInterface
 
     public function delete();
 
-    public function save(int $flags = self::FLAG_ON_SAVE_VALIDATE, string $sectionHandle = null): Classmapper\AbstractModel;
+    public function save(?int $flags = self::FLAG_ON_SAVE_VALIDATE, string $sectionHandle = null): Classmapper\AbstractModel;
 
     public function flagAsModified(): void;
 
