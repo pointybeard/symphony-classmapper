@@ -17,13 +17,6 @@ use pointybeard\Helpers\Functions\Flags;
  */
 abstract class AbstractModel implements Interfaces\ModelInterface
 {
-    protected static $fetchSqlTemplate = 'SELECT SQL_CALC_FOUND_ROWS e.id as `id`, %s
-        FROM `tbl_entries` AS `e` %s
-        WHERE e.section_id = %d AND %s
-        GROUP BY e.id
-        ORDER BY e.id ASC
-    ';
-
     /**
      * Holds the actual data for this model.
      *
@@ -309,8 +302,10 @@ abstract class AbstractModel implements Interfaces\ModelInterface
             $sqlJoins[] = sprintf('LEFT JOIN `tbl_entries_data_%d` AS `%s` ON `%2$s`.entry_id = e.id', $fieldId, $joinTableName);
         }
 
+        $sqlTemplate = static::$fetchSqlTemplate ?? 'SELECT SQL_CALC_FOUND_ROWS e.id as `id`, %s FROM `tbl_entries` AS `e` %s WHERE e.section_id = %d AND %s GROUP BY e.id ORDER BY e.id ASC';
+
         return sprintf(
-            static::$fetchSqlTemplate,
+            $sqlTemplate,
             implode(','.PHP_EOL, $sqlFields),
             implode(PHP_EOL, $sqlJoins),
             self::getSectionId(),
