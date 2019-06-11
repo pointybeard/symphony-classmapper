@@ -8,7 +8,7 @@ use pointybeard\Symphony\Classmapper;
 
 class FindInSet extends Classmapper\AbstractFilter
 {
-    public function __construct($field, array $values, string $operator = self::OPERATOR_AND)
+    public function __construct(string $field, array $values, string $operator = self::OPERATOR_AND)
     {
         parent::__construct(
             $field,
