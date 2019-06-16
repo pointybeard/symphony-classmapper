@@ -612,7 +612,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
         $entry->setDataFromPost($fields, $errors);
 
         $entry->commit();
-        $result = (count($errors) > 0 ? null : $entry->get('id'));
+        $result = (count($errors) > 0 ? null : (int) $entry->get('id'));
 
         // Cleanup
         unset($entry);
