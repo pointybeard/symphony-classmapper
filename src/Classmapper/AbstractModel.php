@@ -252,7 +252,10 @@ abstract class AbstractModel implements Interfaces\ModelInterface
             // be converted into either 'Yes' or 'No'.
             if (Flags\is_flag_set($flags, self::FLAG_BOOL)) {
                 $func = function ($input) {
-                    return (true === $input || 'yes' == strtolower($input))
+                    // Check for NULL so the next bit doesn't fail
+                    $input = $input ?? false;
+
+                    return (true === $input || 'yes' == strtolower((string)$input))
                         ? 'Yes'
                         : 'No'
                     ;
