@@ -39,7 +39,7 @@ if (!function_exists(__NAMESPACE__.'\create')) {
             final class %s {
                 public static function generate() {
                     return get_class(new class() extends AbstractModel implements Interfaces\FilterableModelInterface {
-                        use Traits\hasModelTrait;
+                        use Traits\HasModelTrait;
                         use Traits\HasFilterableModelTrait;
                         public function getSectionHandle(): ?string
                         {
