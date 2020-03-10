@@ -51,11 +51,11 @@ trait HasFilterableModelTrait
      * appendFilter(). The result is cached in $this->filteredResultIterator
      * and can be cleared by calling clearFilters().
      *
-     * @return SymphonyPDO\Lib\ResultIterator The result from calling fetch()
+     * @return \Iterator The result from calling fetch()
      */
-    public function filter(): SymphonyPDO\Lib\ResultIterator
+    public function filter(): \Iterator
     {
-        if (!($this->filteredResultIterator instanceof SymphonyPDO\Lib\ResultIterator)) {
+        if (!($this->filteredResultIterator instanceof \Iterator)) {
             $this->filteredResultIterator = self::fetch(...$this->filters);
         }
         $this->filteredResultIterator->rewind();
@@ -71,9 +71,9 @@ trait HasFilterableModelTrait
      *
      * @param array $filters an array of Classmapper\AbstractFilter objects
      *
-     * @return SymphonyPDOLibResultIterator
+     * @return \Iterator
      */
-    final public static function fetch(?Classmapper\AbstractFilter ...$filters): SymphonyPDO\Lib\ResultIterator
+    final public static function fetch(?Classmapper\AbstractFilter ...$filters): \Iterator
     {
         static::findSectionFields();
 
@@ -151,6 +151,6 @@ trait HasFilterableModelTrait
 
         $query->execute();
 
-        return new SymphonyPDO\Lib\ResultIterator(static::class, $query);
+        return new self::$resultContainerClass(static::class, $query);
     }
 }

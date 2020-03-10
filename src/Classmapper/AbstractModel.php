@@ -31,6 +31,51 @@ abstract class AbstractModel implements Interfaces\ModelInterface
      */
     protected $hasBeenModified = false;
 
+    /**
+     * Holds the namespace of the container class when building a result
+     * @var string
+     */
+    protected static $resultContainerClass = "\\SymphonyPDO\\Lib\\ResultIterator";
+
+    /**
+     * Holds the previously set result container class value which is used when
+     * calling self::restoreDefaultResultContainer()
+     * @var string
+     */
+    protected static $originalResultContainerNamespace = null;
+
+    /**
+     * Changes the result container class used when returning
+     * @param  string $namespace the full namespace of the container class to be
+     *                           used. It must be a class that extends
+     *                           SymphonyPDO\Lib\ResultIterator or offer the
+     *                           same API.
+     * @return string            returns the current value. Helpful when
+     *                           restoring to a previous state.
+     */
+    public static function setDefaultResultContainer(string $namespace): string {
+
+        if(false == class_exists($namespace)) {
+            throw new Exceptions\ClassmapperException("Unable to set container class namespace. '{$namespace}' doesn't exist.");
+        }
+
+        self::$originalResultContainerNamespace = self::$resultContainerClass;
+
+        self::$resultContainerClass = $namespace;
+
+        return self::$originalResultContainerNamespace;
+    }
+
+    /**
+     * Restores the default result container to the previous state
+     */
+    public static function restoreDefaultResultContainer(): void {
+        if(null == self::$originalResultContainerNamespace) {
+            throw new \Exception("Cannot restore default container to null value.");
+        }
+        self::setDefaultResultContainer(self::$originalResultContainerNamespace);
+    }
+
     // Currently this only checks for required fields, however, it could be
     // overloaded to check for other things.
     public function validate(): bool
@@ -319,17 +364,17 @@ abstract class AbstractModel implements Interfaces\ModelInterface
     /**
      * Returns every entry in the section designated by the model.
      *
-     * @return ResultIterator An iterator of all results found. Each item in The
+     * @return Iterator       An iterator of all results found. Each item in The
      *                        iterator is of the model type.
      */
-    public static function all(): SymphonyPDO\Lib\ResultIterator
+    public static function all(): \Iterator
     {
         static::findSectionFields(true, true);
 
         $query = self::getDatabaseConnection()->prepare(static::fetchSQL());
         $query->execute();
 
-        return new SymphonyPDO\Lib\ResultIterator(static::class, $query);
+        return new self::$resultContainerClass(static::class, $query);
     }
 
     /**
@@ -347,10 +392,10 @@ abstract class AbstractModel implements Interfaces\ModelInterface
         $query->bindValue(':id', $entryId, \PDO::PARAM_INT);
         $query->execute();
 
-        return (new SymphonyPDO\Lib\ResultIterator(static::class, $query))->current();
+        return (new self::$resultContainerClass(static::class, $query))->current();
     }
 
-    public static function fetchFromIdList(array $ids): SymphonyPDO\Lib\ResultIterator
+    public static function fetchFromIdList(array $ids): \Iterator
     {
         static::findSectionFields();
         // Sanity check: Make sure all elements in $ids array are integers
@@ -365,7 +410,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
         )));
         $query->execute();
 
-        return new SymphonyPDO\Lib\ResultIterator(static::class, $query);
+        return new self::$resultContainerClass(static::class, $query);
     }
 
     public static function fetchSymphonyField(string $field): \Field
@@ -647,7 +692,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
         // Need to check to see if this field mapping has any flags associated
         // e.g. 'multi'. We ONLY do this if the field has not already been
         // modified. We know this by seeing if the calling method was from
-        // the PDO Database ResultIterator
+        // the PDO Database Iterator
         if ('fetch' == $this->getCallingMethod()) {
             $fieldMapping = static::findCustomFieldMapping($name);
             if (isset($fieldMapping['flags'])) {
