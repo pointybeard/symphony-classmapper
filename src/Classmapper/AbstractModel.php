@@ -804,6 +804,14 @@ abstract class AbstractModel implements Interfaces\ModelInterface
             $this->flagAsModified();
         }
 
+        // 'id' is specical and should either be NULL or INT and never anything else.
+        if($name == "id") {
+            $value = is_numeric($value)
+                ? (int)$value
+                : null
+            ;
+        }
+
         $this->properties[$name] = $value;
     }
 
