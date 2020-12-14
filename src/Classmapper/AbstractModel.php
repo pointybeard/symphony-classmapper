@@ -385,14 +385,16 @@ abstract class AbstractModel implements Interfaces\ModelInterface
      * @return mixed Returns the first item found. The type is
      *               the same as The calling class.
      */
-    public static function loadFromId(int $entryId): self
+    public static function loadFromId(int $entryId): ?self
     {
         self::findSectionFields();
         $query = self::getDatabaseConnection()->prepare(static::fetchSQL('e.id = :id').' LIMIT 1');
         $query->bindValue(':id', $entryId, \PDO::PARAM_INT);
         $query->execute();
 
-        return (new self::$resultContainerClass(static::class, $query))->current();
+        $result = (new self::$resultContainerClass(static::class, $query))->current();
+
+        return ($result instanceof self ? $result : null);
     }
 
     public static function fetchFromIdList(array $ids): \Iterator
