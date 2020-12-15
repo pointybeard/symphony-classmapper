@@ -586,9 +586,11 @@ abstract class AbstractModel implements Interfaces\ModelInterface
         // This is a memory hog. Disable logging.
         Symphony::Database()->disableLogging();
 
+        $errors = [];
+
         if (null !== $this->id) {
             try {
-                $this->update($this->getData());
+                $this->update($this->getData(), $errors);
             } catch (Exceptions\ModelHasNotBeenModifiedException $ex) {
                 // If the enforce modified flag is set, rethrow the exception,
                 // otherwise ignore it.
@@ -597,7 +599,13 @@ abstract class AbstractModel implements Interfaces\ModelInterface
                 }
             }
         } else {
-            $this->id = $this->create($this->getData(), $sectionHandle);
+            $this->id = $this->create($this->getData(), $sectionHandle, $errors);
+        }
+
+        if(false == empty($errors)) {
+            throw new Exceptions\ClassmapperException(
+                "An unexpected error occurred while attempting to save this entry. The following errors were generated: " . implode(",", $errors))
+            ;
         }
 
         // Reset the modified flag
@@ -651,7 +659,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
 
         $errors = [];
         if (null === $this->id || (int) $this->id <= 0) {
-            throw new Exception('No entry ID has been set. Unable to update.');
+            throw new Exceptions\ClassmapperException('No entry ID has been set. Unable to update.');
         }
 
         $entry = EntryManager::fetch($this->id)[0];
