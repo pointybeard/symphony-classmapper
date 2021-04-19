@@ -82,7 +82,9 @@ abstract class AbstractModel implements Interfaces\ModelInterface
     {
         foreach ($this->getData() as $field => $data) {
             $flags = static::$fieldMapping[$field]['flags'];
-            if (Flags\is_flag_set($flags, self::FLAG_REQUIRED) && empty($data)) {
+            // Issue #3 - Check if $data is a numeric value before checking it with the `empty` method. This will prevent
+            // values of 0 from triggering a "Required field was no set" error.
+            if (Flags\is_flag_set($flags, self::FLAG_REQUIRED) && false == is_numeric($data) && true == empty($data)) {
                 throw new Exceptions\ModelValidationFailedException(
                     static::class,
                     $field,
