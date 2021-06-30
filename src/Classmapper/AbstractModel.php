@@ -242,7 +242,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
             } else {
                 // Assume it is singular, and look for a pluralised section handles
                 $sectionHandles = self::pluralise(strtolower(
-                    (new \ReflectionClass(static::class))->getShortName()
+                    (string)(new \ReflectionClass(static::class))->getShortName()
                 ));
             }
             // Check the database for a matching section
@@ -759,7 +759,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
                     // items in the array.
                     if (Flags\is_flag_set($flags, self::FLAG_BOOL)) {
                         $func = function ($input) {
-                            return 'yes' == strtolower($value) || true === $value;
+                            return 'yes' == strtolower((string)$value) || true === $value;
                         };
                         $value = array_map($func, $value);
                     } elseif (Flags\is_flag_set($flags, self::FLAG_INT)) {
@@ -780,7 +780,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
                 // FLAG_BOOL | FLAG_CURRENCY so just assume one is only ever
                 // set.
                 } elseif (Flags\is_flag_set($flags, self::FLAG_BOOL)) {
-                    $value = ('yes' == strtolower($value) || true === $value);
+                    $value = ('yes' == strtolower((string)$value) || true === $value);
                 } elseif (Flags\is_flag_set($flags, self::FLAG_INT)) {
                     $value = (int) $value;
                 } elseif (Flags\is_flag_set($flags, self::FLAG_STR)) {
