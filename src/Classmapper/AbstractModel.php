@@ -770,7 +770,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
                         $value = array_map('floatval', $value);
                     } elseif (Flags\is_flag_set($flags, self::FLAG_CURRENCY)) {
                         $value = array_map(function ($input) {
-                            return (float) number_format((float) $input, 2, null, null);
+                            return (float) number_format((float) $input, 2, ".", "");
                         }, $value);
                     }
 
@@ -788,7 +788,7 @@ abstract class AbstractModel implements Interfaces\ModelInterface
                 } elseif (Flags\is_flag_set($flags, self::FLAG_FLOAT)) {
                     $value = (float) $value;
                 } elseif (Flags\is_flag_set($flags, self::FLAG_CURRENCY)) {
-                    $value = (float) number_format((float) $value, 2, null, null);
+                    $value = (float) number_format((float) $value, 2, ".", "");
                 }
 
                 // If the FLAG_NULL flag is set, we need to convert empty values
